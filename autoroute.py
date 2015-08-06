@@ -55,7 +55,7 @@ class AutoRoute(object):
     exponential_flow = None #(Q = Flow_Alpha * DA^Flow_Beta)
     expon_precip_flow = None #(Q = Flow_Alpha * DA^Flow_Beta Flow_Prec_Const^Flow_Prec_Exp)
     log10_regress_flow = None #(Q = 10 ^ ( Flow_Gamma + Flow_Alpha * DA^Flow_Beta ))
-    flow_alpha = None #default is 0.0
+    flow_alpha = None #default is 1.0
     flow_beta = None #default is 1.0
     flow_gamma = None #default is 0.0
     flow_prec_const = None #default is 1.0
@@ -66,20 +66,12 @@ class AutoRoute(object):
     convert_q_cfs_to_cms = None #default is 1.0 (convert flow cfs to cms)
     str_is_m2 = None #default is 0.0 (units STR values are in - ex. 30 means 30mx30m)
     
-    def __init__(self, autoroute_executable_location, stream_file, dem_file, 
-                 spatial_units, **kwargs):
+    def __init__(self, autoroute_executable_location, **kwargs):
         """
         Initialize the class with variables given by the user
-        #REQUIRED ARGS
-        stream_file #stream raster
-        dem_file #dem raster
-        spatial_units #can be km, m, or deg
         """
         self.autoroute_executable_location = autoroute_executable_location
-        self.update_parameters(stream_file=stream_file, 
-                               dem_file=dem_file, 
-                               spatial_units=spatial_units,
-                               **kwargs)
+        self.update_parameters(**kwargs)
         
 
     def update_parameters(self, **kwargs):
@@ -129,7 +121,7 @@ class AutoRoute(object):
             autoroute_input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                                 "AUTO_ROUTE_INPUT.txt")
                                                 
-        self.generate_input_file(autoroute_input_file)
+            self.generate_input_file(autoroute_input_file)
 
         #run AutoRoute
         print("Running AutoRoute ...")
@@ -196,11 +188,13 @@ class AutoRoute(object):
 
 if __name__ == "__main__":
     input_folder = "/Users/rdchlads/autorapid/Test_Case/n39w087"
+    print ogr.GetDriverByName("ASCII")
+    print ogr.GetDriverByName("Arc/Info ASCIIGRID")
     auto_mng = AutoRoute('/Users/rdchlads/autorapid/AutoRoute/source_code/autoroute',
                          stream_file=os.path.join(input_folder, "Flow_n39w087.asc"),
                          dem_file=os.path.join(input_folder, "dem_n39w087.asc"),
                          spatial_units="deg",
-                         SHP_Out_File=os.path.join(input_folder,"tmp", "Flood_n39w087.asc"),
+                         SHP_Out_File=os.path.join(input_folder,"tmp", "Flood_n39w087.tif"),
                          SHP_Out_Shapefile=os.path.join(input_folder,"tmp", "Flood_n39w087_test.shp"),
                          lu_raster=os.path.join(input_folder, "ar_lulc_clip.asc"),
                          LU_Manning_n=os.path.join(input_folder, "AR_Manning_n_for_NLCD_LOW.txt"),
@@ -221,7 +215,9 @@ if __name__ == "__main__":
                          )
                          
     auto_mng.run_autoroute()
-        
+
+    auto_mng.update_parameters(x_Section_dist=1200)       
+    auto_mng.run_autoroute()
             
             
             
