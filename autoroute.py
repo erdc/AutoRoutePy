@@ -2,12 +2,6 @@
 import datetime
 import os
 from subprocess import Popen, PIPE
-try:
-    from osgeo import gdal, ogr, osr
-except ImportError:
-    import gdal, ogr, osr
-
-gdal.AllRegister()
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
 #------------------------------------------------------------------------------
@@ -65,12 +59,16 @@ class AutoRoute(object):
     convert_da_to_sqmi = None #default is 1.0 (convert area km2 to sqmi)
     convert_q_cfs_to_cms = None #default is 1.0 (convert flow cfs to cms)
     str_is_m2 = None #default is 0.0 (units STR values are in - ex. 30 means 30mx30m)
+
+    #list of attributes which require no value    
+    _no_value_attr_list = ["uniform_flow", "proportional_flow", "exponential_flow", "expon_precip_flow", "log10_regress_flow"]
+
     
     def __init__(self, autoroute_executable_location, **kwargs):
         """
         Initialize the class with variables given by the user
         """
-        self.autoroute_executable_location = autoroute_executable_location
+        self._autoroute_executable_location = autoroute_executable_location
         self.update_parameters(**kwargs)
         
 
@@ -84,16 +82,16 @@ class AutoRoute(object):
             #debuf\g
             #import pdb
             #pdb.set_trace()
-            if key in dir(self) and key != "autoroute_executable_location":
+            if key in dir(self) and not key.startswith('_'):
                 setattr(self, key, value)
             else:
-                print("Invalid argument" , key, ". Skipping ...")
+                raise Exception("Invalid AutoRoute parameter %s." % key)
     
     def generate_input_file(self, file_path):
         """
-        Prepare AUTO_ROUTE_INPUT.txt file
+        Generate AUTO_ROUTE_INPUT.txt file
         """
-        print("Generating AutoRoute input file ...")
+        print "Generating AutoRoute input file ..."
         try:
             os.remove(file_path)
         except OSError:
@@ -101,14 +99,43 @@ class AutoRoute(object):
         
         new_file = open(file_path,'w')
         for attr, value in self.__dict__.iteritems():
-            if not attr.startswith('_') \
-                and value \
-                and attr != "shp_out_shapefile" \
-                and attr != "autoroute_executable_location":
-                    
+            if not attr.startswith('_') and value:
                 new_file.write("%s %s\n" % (attr, value))
     
         new_file.close()
+        
+    def update_input_file(self, file_path):
+        """
+        Update existing input file with new parameters
+        """
+        if os.path.exists(file_path) and file_path:
+            print "Adding missing inputs from AutoRoute input file ..."
+            old_file = open(file_path, 'r')
+            for line in old_file:
+                line = line.strip()
+                if line.beginswith('#') or not line:
+                    continue
+                line_split = line.split(" ")
+                attr = line_split[0].lower()
+                value = None
+                if len(line_split)>1:
+                    value = line_split[1]
+                elif attr in self._no_value_attr_list:
+                    value = True
+                    
+                #add attribute if exists
+                if attr in dir(self) \
+                    and not attr.startswith('_'):
+                    #set attribute if not set already
+                    if not getattr(self, attr):
+                        setattr(self, attr, value)
+                else:
+                    print "Invalid argument" , attr, ". Skipping ..."
+            old_file.close()
+            
+            self.generate_input_file(file_path)
+        else:
+            raise Exception("AutoRoute input file to update not found.")
     
     def run_autoroute(self, autoroute_input_file=""):
         """
@@ -117,79 +144,32 @@ class AutoRoute(object):
     
         time_start = datetime.datetime.utcnow()
     
-        if not autoroute_input_file:
-            autoroute_input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                "AUTO_ROUTE_INPUT.txt")
-                                                
+        if not autoroute_input_file or not os.path.exists(autoroute_input_file):
+            #generate input file if it does not exist
+            if not autoroute_input_file:
+                autoroute_input_file = "AUTO_ROUTE_INPUT.txt"
             self.generate_input_file(autoroute_input_file)
+        else:
+            #update existing file
+            self.update_input_file(autoroute_input_file)
 
         #run AutoRoute
-        print("Running AutoRoute ...")
-        process = Popen([self.autoroute_executable_location, autoroute_input_file], 
+        print "Running AutoRoute ..."
+        process = Popen([self._autoroute_executable_location, autoroute_input_file], 
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
             print err
             raise
         else:
-            print('AutoRoute output:')
+            print 'AutoRoute output:'
             for line in out.split('\n'):
                 print line
 
         print("Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start))
-        
-        if self.shp_out_shapefile and os.path.exists(self.shp_out_file) and self.shp_out_shapefile:
-            self.convert_raster_to_shapefile(self.shp_out_file, self.shp_out_shapefile)
-        
-    def convert_raster_to_shapefile(self, raster_name, shapefile_name="", raster_band=1):
-        """
-        Converts a raster to a shapefile
-        Adapted from https://svn.osgeo.org/gdal/trunk/gdal/swig/python/scripts/gdal_polygonize.py
-        """
-        time_start_convert = datetime.datetime.utcnow()
-        #open the raster
-        gdal_raster = gdal.Open( raster_name )
-        if gdal_raster is None:
-            print("Unable to open", raster_name)
-            return
-        gdal_raster_band = gdal_raster.GetRasterBand(raster_band) 
-        gdal_raster_mask = gdal_raster_band.GetMaskBand()
-        
-        #create output shapefile
-        if not shapefile_name:
-            shapefile_name = "%s_shp.shp" % os.path.basename(raster_name)
-            
-        print('Creating shapefile', shapefile_name, "...")
-        
-        drv = ogr.GetDriverByName("ESRI Shapefile")
-        ogr_out_shapefile = drv.CreateDataSource(shapefile_name)
-        
-        srs = None
-        if gdal_raster.GetProjectionRef() != '':
-            srs = osr.SpatialReference()
-            srs.ImportFromWkt( gdal_raster.GetProjectionRef() )
-            
-        out_shapefle_name, extension = os.path.splitext(shapefile_name)
-        shp_layername = os.path.basename(out_shapefle_name)
-        ogr_out_shapefile_lyr = ogr_out_shapefile.CreateLayer(shp_layername, srs = srs )
-        dst_fieldname = 'DN'
-            
-        fd = ogr.FieldDefn( dst_fieldname, ogr.OFTInteger )
-        ogr_out_shapefile_lyr.CreateField( fd )
-        dst_field = 0
-        
-        #polygonize raster
-        prog_func = gdal.TermProgress
-        result = gdal.Polygonize( gdal_raster_band, gdal_raster_mask, ogr_out_shapefile_lyr, 
-                                  dst_field, options=[], callback=prog_func )
-        print("Time to run convert raster to shapefile: %s" %
-              datetime.datetime.utcnow()-time_start_convert)
-            
 
 if __name__ == "__main__":
     input_folder = "/Users/rdchlads/autorapid/Test_Case/n39w087"
-    print ogr.GetDriverByName("ASCII")
-    print ogr.GetDriverByName("Arc/Info ASCIIGRID")
     auto_mng = AutoRoute('/Users/rdchlads/autorapid/AutoRoute/source_code/autoroute',
                          stream_file=os.path.join(input_folder, "Flow_n39w087.asc"),
                          dem_file=os.path.join(input_folder, "dem_n39w087.asc"),
@@ -215,10 +195,6 @@ if __name__ == "__main__":
                          )
                          
     auto_mng.run_autoroute()
-
-    auto_mng.update_parameters(x_Section_dist=1200)       
-    auto_mng.run_autoroute()
-            
             
             
             
