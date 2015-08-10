@@ -113,7 +113,7 @@ class AutoRoute(object):
             old_file = open(file_path, 'r')
             for line in old_file:
                 line = line.strip()
-                if line.beginswith('#') or not line:
+                if line.startswith('#') or not line:
                     continue
                 line_split = line.split(" ")
                 attr = line_split[0].lower()
@@ -122,7 +122,8 @@ class AutoRoute(object):
                     value = line_split[1]
                 elif attr in self._no_value_attr_list:
                     value = True
-                    
+                print line
+                print attr
                 #add attribute if exists
                 if attr in dir(self) \
                     and not attr.startswith('_'):
@@ -169,32 +170,16 @@ class AutoRoute(object):
         print("Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start))
 
 if __name__ == "__main__":
-    input_folder = "/Users/rdchlads/autorapid/Test_Case/n39w087"
+    input_folder = "/Users/rdchlads/autorapid/prepare_input/Korea/"
     auto_mng = AutoRoute('/Users/rdchlads/autorapid/AutoRoute/source_code/autoroute',
-                         stream_file=os.path.join(input_folder, "Flow_n39w087.asc"),
-                         dem_file=os.path.join(input_folder, "dem_n39w087.asc"),
+                         stream_file=os.path.join(input_folder, "streamflow_raster.tif"),
+                         dem_file=os.path.join(input_folder, "Korea_DEMs", "merged_dems.tif"),
                          spatial_units="deg",
-                         SHP_Out_File=os.path.join(input_folder,"tmp", "Flood_n39w087.tif"),
-                         SHP_Out_Shapefile=os.path.join(input_folder,"tmp", "Flood_n39w087_test.shp"),
-                         lu_raster=os.path.join(input_folder, "ar_lulc_clip.asc"),
-                         LU_Manning_n=os.path.join(input_folder, "AR_Manning_n_for_NLCD_LOW.txt"),
-                         X_Section_Dist=5000.0,
-                         Q_Limit=1.01,
-                         Use_Prev_D_4_XS=1,
-                         PROPORTIONAL_FLOW=True,
-                         Flow_Alpha=1.0,
-                         STR_IS_M2=1000.0,
-                         Gen_Dir_Dist=1,
-                         Gen_Slope_Dist=1,
-                         Thin_Non_PerpX=0,
-                         Elim_Non_ConctX=1,
-                         Degree_Manip=6.1,
-                         Degree_Interval=1.5,
-                         Low_Spot_Range=15,
-                         Str_Limit_Val=1
+                         SHP_Out_File=os.path.join(input_folder,"tmp", "flood.tif"),
+                         SHP_Out_Shapefile=os.path.join(input_folder,"tmp", "flood_Shp.shp"),
                          )
                          
-    auto_mng.run_autoroute()
+    auto_mng.run_autoroute(autoroute_input_file=os.path.join(input_folder, "Flood", "AUTOROUTE_INPUT_FILE.txt"))
             
             
             
