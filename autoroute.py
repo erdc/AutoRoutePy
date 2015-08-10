@@ -115,15 +115,13 @@ class AutoRoute(object):
                 line = line.strip()
                 if line.startswith('#') or not line:
                     continue
-                line_split = line.split(" ")
+                line_split = line.split()
                 attr = line_split[0].lower()
                 value = None
                 if len(line_split)>1:
                     value = line_split[1]
                 elif attr in self._no_value_attr_list:
                     value = True
-                print line
-                print attr
                 #add attribute if exists
                 if attr in dir(self) \
                     and not attr.startswith('_'):
