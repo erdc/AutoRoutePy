@@ -13,6 +13,8 @@ def merge_shapefiles(directory, out_shapefile_name, remove_old=False):
     Merges all shapefiles in a directory
     """
     print "Merging Shapefiles ..."
+    fileList = glob(os.path.join(directory, "*.shp"))
+
     out_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
     if os.path.exists(out_shapefile_name):
         out_driver.DeleteDataSource(out_shapefile_name)
@@ -23,8 +25,6 @@ def merge_shapefiles(directory, out_shapefile_name, remove_old=False):
     projection_file = glob(os.path.join(directory, "*.prj"))[0]
     copy(projection_file, "%s.prj" % os.path.splitext(out_shapefile_name)[0])
     
-    fileList = glob(os.path.join(directory, "*.shp"))
-    
     for file_path in fileList:
         ds = ogr.Open(file_path)
         lyr = ds.GetLayer()
@@ -33,14 +33,11 @@ def merge_shapefiles(directory, out_shapefile_name, remove_old=False):
             out_feat.SetGeometry(feat.GetGeometryRef().Clone())
             out_layer.CreateFeature(out_feat)
             out_layer.SyncToDisk()
+            out_feat.Destroy()
+            feat.Destroy()
 
         if remove_old:
-            all_assocaited_files = glob("%s*" % os.path.splitext(file_path)[0])
-            for associated_file in  all_assocaited_files:
-                try:
-                    os.remove(associated_file)
-                except OSError:
-                    pass
+            out_driver.DeleteDataSource(file_path)
                 
 def rename_shapefiles(directory, out_shapefile_basename, startswith=""):
     """

@@ -73,7 +73,6 @@ class AutoRoutePrepare(object):
         cols = streamid_raster_band.XSize
         rows = streamid_raster_band.YSize
         data = streamid_raster_band.ReadAsArray(0, 0, cols, rows)
-        print "Writing output ..."
         with open(output_streamid_rasterindex_file, 'wb') as outfile:
             writer = csv.writer(outfile)
             for i in range(0, rows):
@@ -243,6 +242,7 @@ class AutoRoutePrepare(object):
 
         print "Writing data to streamflow raster ..."
         streamflow_raster_band.WriteArray(streamflow_raster_array)
+
 
             
 if __name__ == "__main__":
