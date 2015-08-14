@@ -165,7 +165,8 @@ class AutoRoute(object):
             for line in out.split('\n'):
                 print line
 
-        print("Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start))
+        print "Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start)
+
 
 if __name__ == "__main__":
     input_folder = "/Users/rdchlads/autorapid/prepare_input/Korea/"

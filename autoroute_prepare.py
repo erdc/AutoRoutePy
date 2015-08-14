@@ -67,6 +67,7 @@ class AutoRoutePrepare(object):
         556, 1, 1
         ...
         """
+        print "Generating streamID rasterIndex file ..."
         streamid_raster = gdal.Open(streamid_raster_path)
         streamid_raster_band = streamid_raster.GetRasterBand(1)
         cols = streamid_raster_band.XSize
