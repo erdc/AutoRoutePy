@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 from glob import glob
 import os
-from osgeo import ogr
+from osgeo import ogr, osr
 from shutil import copy
 
 #------------------------------------------------------------------------------
 #AutoRoute Post Processing Functions
 #------------------------------------------------------------------------------
 
-def merge_shapefiles(directory, out_shapefile_name, remove_old=False):
+def merge_shapefiles(directory, out_shapefile_name, reproject=False, remove_old=False):
     """
     Merges all shapefiles in a directory
+    Options to reproject and remove old files
     """
     print "Merging Shapefiles ..."
     fileList = glob(os.path.join(directory, "*.shp"))
@@ -21,6 +22,9 @@ def merge_shapefiles(directory, out_shapefile_name, remove_old=False):
     out_ds = out_driver.CreateDataSource(out_shapefile_name)
     out_layer = out_ds.CreateLayer(out_shapefile_name, geom_type=ogr.wkbPolygon)
     
+    if reproject:
+        out_spatial_reference = osr.SpatialReference()
+        out_spatial_reference.ImportFromEPSG(4326) #gcs_wgs_1984
     #create projection file
     projection_file = glob(os.path.join(directory, "*.prj"))[0]
     copy(projection_file, "%s.prj" % os.path.splitext(out_shapefile_name)[0])
@@ -28,16 +32,30 @@ def merge_shapefiles(directory, out_shapefile_name, remove_old=False):
     for file_path in fileList:
         ds = ogr.Open(file_path)
         lyr = ds.GetLayer()
-        for feat in lyr:
-            out_feat = ogr.Feature(out_layer.GetLayerDefn())
-            out_feat.SetGeometry(feat.GetGeometryRef().Clone())
+
+        if reproject:
+            in_spatial_ref = lyr.GetSpatialRef()
+            coordinate_trans = osr.CoordinateTransformation(in_spatial_ref, 
+                                                            out_spatial_reference)
+
+        out_layer_definition = out_layer.GetLayerDefn()
+        for in_feat in lyr:
+            geom = in_feat.GetGeometryRef().Clone()
+            if reproject:
+                geom.Transform(coordinate_trans)
+            out_feat = ogr.Feature(out_layer_definition)
+            out_feat.SetGeometry(geom)
             out_layer.CreateFeature(out_feat)
             out_layer.SyncToDisk()
             out_feat.Destroy()
-            feat.Destroy()
-
+            in_feat.Destroy()
+            
+        ds.Destroy() #close the shapefile
         if remove_old:
             out_driver.DeleteDataSource(file_path)
+            
+    #close the output shapefile
+    out_ds.Destroy()
                 
 def rename_shapefiles(directory, out_shapefile_basename, startswith=""):
     """
