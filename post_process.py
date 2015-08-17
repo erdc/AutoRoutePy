@@ -25,9 +25,11 @@ def merge_shapefiles(directory, out_shapefile_name, reproject=False, remove_old=
     if reproject:
         out_spatial_reference = osr.SpatialReference()
         out_spatial_reference.ImportFromEPSG(4326) #gcs_wgs_1984
-    #create projection file
-    projection_file = glob(os.path.join(directory, "*.prj"))[0]
-    copy(projection_file, "%s.prj" % os.path.splitext(out_shapefile_name)[0])
+        out_layer.SetSpatialRef(out_spatial_reference)
+    else:
+        #create projection file
+        projection_file = glob(os.path.join(directory, "*.prj"))[0]
+        copy(projection_file, "%s.prj" % os.path.splitext(out_shapefile_name)[0])
     
     for file_path in fileList:
         ds = ogr.Open(file_path)
