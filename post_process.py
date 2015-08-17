@@ -22,14 +22,18 @@ def merge_shapefiles(directory, out_shapefile_name, reproject=False, remove_old=
     out_ds = out_driver.CreateDataSource(out_shapefile_name)
     out_layer = out_ds.CreateLayer(out_shapefile_name, geom_type=ogr.wkbPolygon)
     
+    out_projection_file_name = "%s.prj" % os.path.splitext(out_shapefile_name)[0]
     if reproject:
         out_spatial_reference = osr.SpatialReference()
         out_spatial_reference.ImportFromEPSG(4326) #gcs_wgs_1984
-        out_layer.SetSpatialRef(out_spatial_reference)
+        out_spatial_reference.MorphToESRI()
+        with open(out_projection_file_name, 'w') as prj_file:
+            prj_file.write(out_spatial_reference.ExportToWkt())
+      
     else:
         #create projection file
         projection_file = glob(os.path.join(directory, "*.prj"))[0]
-        copy(projection_file, "%s.prj" % os.path.splitext(out_shapefile_name)[0])
+        copy(projection_file, out_projection_file_name)
     
     for file_path in fileList:
         ds = ogr.Open(file_path)
