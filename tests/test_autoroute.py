@@ -6,7 +6,7 @@ from shutil import copy
 
 #local import
 import sys
-sys.path.append(os.path.dirname(os.path.dirname( os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from autoroute import AutoRoute
 
 @raises(Exception)
@@ -14,7 +14,7 @@ def test_generate_autoroute_input_file_invalid():
     """
     Checks AutoRoute input file generation with invalid input
     """
-    main_tests_folder = os.path.dirname(os.path.realpath(__file__))
+    main_tests_folder = os.path.dirname(os.path.abspath(__file__))
     
     ouptut_data_path = os.path.join(main_tests_folder, 'output')
 
@@ -44,7 +44,7 @@ def test_generate_autoroute_input_file():
     """
     Checks AutoRoute input file generation with valid input
     """
-    main_tests_folder = os.path.dirname(os.path.realpath(__file__))
+    main_tests_folder = os.path.dirname(os.path.abspath(__file__))
     
     original_data_path = os.path.join(main_tests_folder, 'original')
     ouptut_data_path = os.path.join(main_tests_folder, 'output')
@@ -89,7 +89,7 @@ def test_update_autoroute_input_file_invalid():
     """
     Checks AutoRoute input file update with invalid input
     """
-    main_tests_folder = os.path.dirname(os.path.realpath(__file__))
+    main_tests_folder = os.path.dirname(os.path.abspath(__file__))
     
     original_data_path = os.path.join(main_tests_folder, 'original')
     output_data_path = os.path.join(main_tests_folder, 'output')
@@ -117,7 +117,7 @@ def test_update_autoroute_input_file():
     """
     Checks AutoRoute input file generation with valid input
     """
-    main_tests_folder = os.path.dirname(os.path.realpath(__file__))
+    main_tests_folder = os.path.dirname(os.path.abspath(__file__))
     
     original_data_path = os.path.join(main_tests_folder, 'original')
     output_data_path = os.path.join(main_tests_folder, 'output')
