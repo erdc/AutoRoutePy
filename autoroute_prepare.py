@@ -3,7 +3,7 @@ import csv
 import netCDF4 as NET
 import numpy as np
 import os
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
@@ -35,7 +35,9 @@ class AutoRoutePrepare(object):
                                          template_raster_band.YSize, 1, dtype)
         
         target_ds.SetGeoTransform(template_raster.GetGeoTransform())
-        target_ds.SetProjection(template_raster.GetProjection())
+        out_projection = osr.SpatialReference()
+        out_projection.ImportFromWkt(template_raster.GetProjectionRef())
+        target_ds.SetProjection(out_projection.ExportToWkt())
         band = target_ds.GetRasterBand(1)
         band.SetNoDataValue(-9999)
 
@@ -246,13 +248,12 @@ class AutoRoutePrepare(object):
 
             
 if __name__ == "__main__":
-    arp = AutoRoutePrepare('/Users/rdchlads/autorapid/prepare_input/Korea/Korea_DEMs/merged_dems.tif',
-                           '/Users/rdchlads/autorapid/prepare_input/Korea/korea_drainageline/korea_drainageline.shp')
-    """                       
-    arp.rasterize_stream_shapefle('/Users/rdchlads/autorapid/prepare_input/Korea/rasterized_streamfile.tif',
-                                      'GridID')
-    arp.create_streamid_rasterindex_file('/Users/rdchlads/autorapid/prepare_input/Korea/rasterized_streamfile.tif',
-                                         '/Users/rdchlads/autorapid/prepare_input/Korea/streamid_rasterindex.csv')
+    arp = AutoRoutePrepare('/home/alan/work/autoroute/texas_gulf/30w099/grdn30w099_13/hdr.adf',
+                           '/home/alan/work/autoroute/texas_gulf/NHD_FlowLines_12/NHDFlowLine_12.shp')
+    arp.rasterize_stream_shapefle('/home/alan/work/autoroute/texas_gulf/30w099/rasterized_streamfile.tif',
+                                  'COMID')
+    arp.create_streamid_rasterindex_file('/home/alan/work/autoroute/texas_gulf/30w099/rasterized_streamfile.tif',
+                                         '/home/alan/work/autoroute/texas_gulf/30w099/streamid_rasterindex.csv')
                                          
     """
     rapid_input =  '/Users/rdchlads/tethysdev/tethysapp-erfp_tool/rapid_files/ecmwf/korean_peninsula/korea/20150806.0'
@@ -260,3 +261,4 @@ if __name__ == "__main__":
                                                      prediction_folder=rapid_input, 
                                                      out_streamflow_raster='/Users/rdchlads/autorapid/prepare_input/Korea/streamflow_raster.tif',
                                                      method_x="max", method_y="max")
+    """
