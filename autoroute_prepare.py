@@ -134,8 +134,14 @@ class AutoRoutePrepare(object):
      
         print "Finding streamid indices ..."
         streamid_index_list, reordered_streamid_list = self.get_streamids_in_netcdf_file(streamid_list_unique, prediction_files[0])
+        data_nc = NET.Dataset(prediction_files[0], mode="r")
+        time_length = len(data_nc.variables['time'][:])
+        data_nc.close()
+        first_half_size = 40
+        if time_length == 41 or time_length == 61:
+            first_half_size = 41
         print "Extracting Data ..."
-        reach_prediciton_array_first_half = np.zeros((len(streamid_list_unique),len(prediction_files),40))
+        reach_prediciton_array_first_half = np.zeros((len(streamid_list_unique),len(prediction_files),first_half_size))
         reach_prediciton_array_second_half = np.zeros((len(streamid_list_unique),len(prediction_files),20))
         #get information from datasets
         for file_index, prediction_file in enumerate(prediction_files):
@@ -154,9 +160,9 @@ class AutoRoutePrepare(object):
                     continue
                 
                 for streamid_index, streamid in enumerate(reordered_streamid_list):
-                    reach_prediciton_array_first_half[streamid_index][file_index] = data_values_2d_array[streamid_index][:40]
+                    reach_prediciton_array_first_half[streamid_index][file_index] = data_values_2d_array[streamid_index][:first_half_size]
                     if(ensemble_index < 52):
-                        reach_prediciton_array_second_half[streamid_index][file_index] = data_values_2d_array[streamid_index][40:]
+                        reach_prediciton_array_second_half[streamid_index][file_index] = data_values_2d_array[streamid_index][first_half_size:]
                 data_nc.close()
      
             except Exception, e:
