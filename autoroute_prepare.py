@@ -151,9 +151,20 @@ class AutoRoutePrepare(object):
                 data_nc = NET.Dataset(prediction_file, mode="r")
                 qout_dimensions = data_nc.variables['Qout'].dimensions
                 if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
+                    #data is raw rapid output
                     data_values_2d_array = data_nc.variables['Qout'][:,streamid_index_list].transpose()
                 elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
-                    data_values_2d_array = data_nc.variables['Qout'][streamid_index_list, :]
+                    #the data is CF compliant and has time=0 added to output
+                    if ensemble_index == 52:
+                        streamflow_1hr = data_nc.variables['Qout'][streamid_index_list,:91:6]
+                        # calculate time series of 6 hr data from 3 hr data
+                        streamflow_3hr = data_nc.variables['Qout'][streamid_index_list,92:109:2]
+                        # get the time series of 6 hr data
+                        streamflow_6hr =  data_nc.variables['Qout'][streamid_index_list,109:]
+                        # concatenate all time series
+                        data_values_2d_array = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr])
+                    else:
+                        data_values_2d_array = data_nc.variables['Qout'][streamid_index_list,:]
                 else:
                     print "Invalid ECMWF forecast file", prediction_file
                     data_nc.close()
