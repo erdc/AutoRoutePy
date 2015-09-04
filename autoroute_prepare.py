@@ -241,11 +241,62 @@ class AutoRoutePrepare(object):
                     streamflow_raster_array[row][col] = data_val
                 except IndexError:
                     print row, col, data_val
+                    raise
 
         print "Writing data to streamflow raster ..."
         streamflow_raster_band.WriteArray(streamflow_raster_array)
+    
+    def generate_raster_from_return_period_file(self, streamid_rasterindex_file, 
+                                                out_streamflow_raster,
+                                                return_period_file, 
+                                                return_period):
+        """
+        Generates return period raster from return period file
+        """
+        print "Extracting Return Period Data ..."
+        return_period_nc = NET.Dataset(return_period_file, mode="r")
+        if return_period == "return_period_20": 
+            return_period_data = return_period_nc.variables['return_period_20'][:]
+        elif return_period == "return_period_10": 
+            return_period_data = return_period_nc.variables['return_period_10'][:]
+        elif return_period == "return_period_2": 
+            return_period_data = return_period_nc.variables['return_period_2'][:]
+        else:
+            raise Exception("Invalid return period definition.")
 
+        return_period_comids = return_period_nc.variables['COMID'][:]
+        return_period_nc.close()
+        
+        #get where streamids are in the lookup grid id table
+        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file)
+        streamid_list_full = np.array([int(row[0]) for row in streamid_rasterindex_table])
+        streamid_list_unique = np.unique(streamid_list_full)
+        print "Analyzing data ..."
+        streamflow_raster = self.generate_raster_from_dem(out_streamflow_raster, dtype=gdal.GDT_Float32)
+        streamflow_raster_band = streamflow_raster.GetRasterBand(1)
+        streamflow_raster_array = np.full((streamflow_raster_band.YSize, streamflow_raster_band.XSize), -9999, dtype=np.float32)
+        
+        for streamid in streamid_list_unique:
+            try:
+                #get where streamids are in netcdf file
+                streamid_index = np.where(return_period_comids==streamid)[0][0]
+            except Exception:
+                print "streamid", streamid, "not found in list. Skipping ..."
+                raise
+                
+            grid_index_table_indices = np.where(streamid_list_full==streamid)[0]
+            for grid_index_table_index in grid_index_table_indices:
+                row = int(streamid_rasterindex_table[grid_index_table_index][1])
+                col = int(streamid_rasterindex_table[grid_index_table_index][2])
+                try:
+                    streamflow_raster_array[row][col] = return_period_data[streamid_index]
+                except IndexError:
+                    print row, col, return_period_data[streamid_index]
+                    raise
 
+ 
+        print "Writing data to streamflow raster ..."
+        streamflow_raster_band.WriteArray(streamflow_raster_array)
             
 if __name__ == "__main__":
     arp = AutoRoutePrepare('/home/alan/work/autoroute/texas_gulf/30w099/grdn30w099_13/hdr.adf',
