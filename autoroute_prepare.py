@@ -134,8 +134,14 @@ class AutoRoutePrepare(object):
      
         print "Finding streamid indices ..."
         streamid_index_list, reordered_streamid_list = self.get_streamids_in_netcdf_file(streamid_list_unique, prediction_files[0])
+        data_nc = NET.Dataset(prediction_files[0], mode="r")
+        time_length = len(data_nc.variables['time'][:])
+        data_nc.close()
+        first_half_size = 40
+        if time_length == 41 or time_length > 60:
+            first_half_size = 41
         print "Extracting Data ..."
-        reach_prediciton_array_first_half = np.zeros((len(streamid_list_unique),len(prediction_files),40))
+        reach_prediciton_array_first_half = np.zeros((len(streamid_list_unique),len(prediction_files),first_half_size))
         reach_prediciton_array_second_half = np.zeros((len(streamid_list_unique),len(prediction_files),20))
         #get information from datasets
         for file_index, prediction_file in enumerate(prediction_files):
@@ -145,18 +151,29 @@ class AutoRoutePrepare(object):
                 data_nc = NET.Dataset(prediction_file, mode="r")
                 qout_dimensions = data_nc.variables['Qout'].dimensions
                 if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
+                    #data is raw rapid output
                     data_values_2d_array = data_nc.variables['Qout'][:,streamid_index_list].transpose()
                 elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
-                    data_values_2d_array = data_nc.variables['Qout'][streamid_index_list, :]
+                    #the data is CF compliant and has time=0 added to output
+                    if ensemble_index == 52:
+                        streamflow_1hr = data_nc.variables['Qout'][streamid_index_list, :91:6]
+                        # calculate time series of 6 hr data from 3 hr data
+                        streamflow_3hr = data_nc.variables['Qout'][streamid_index_list, 92:109:2]
+                        # get the time series of 6 hr data
+                        streamflow_6hr =  data_nc.variables['Qout'][streamid_index_list, 109:]
+                        # concatenate all time series
+                        data_values_2d_array = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr], axis=1)
+                    else:
+                        data_values_2d_array = data_nc.variables['Qout'][streamid_index_list,:]
                 else:
                     print "Invalid ECMWF forecast file", prediction_file
                     data_nc.close()
                     continue
                 
                 for streamid_index, streamid in enumerate(reordered_streamid_list):
-                    reach_prediciton_array_first_half[streamid_index][file_index] = data_values_2d_array[streamid_index][:40]
+                    reach_prediciton_array_first_half[streamid_index][file_index] = data_values_2d_array[streamid_index][:first_half_size]
                     if(ensemble_index < 52):
-                        reach_prediciton_array_second_half[streamid_index][file_index] = data_values_2d_array[streamid_index][40:]
+                        reach_prediciton_array_second_half[streamid_index][file_index] = data_values_2d_array[streamid_index][first_half_size:]
                 data_nc.close()
      
             except Exception, e:
@@ -301,15 +318,14 @@ class AutoRoutePrepare(object):
 if __name__ == "__main__":
     arp = AutoRoutePrepare('/home/alan/work/autoroute/texas_gulf/30w099/grdn30w099_13/hdr.adf',
                            '/home/alan/work/autoroute/texas_gulf/NHD_FlowLines_12/NHDFlowLine_12.shp')
-    arp.rasterize_stream_shapefle('/home/alan/work/autoroute/texas_gulf/30w099/rasterized_streamfile.tif',
+    """    arp.rasterize_stream_shapefle('/home/alan/work/autoroute/texas_gulf/30w099/rasterized_streamfile.tif',
                                   'COMID')
     arp.create_streamid_rasterindex_file('/home/alan/work/autoroute/texas_gulf/30w099/rasterized_streamfile.tif',
                                          '/home/alan/work/autoroute/texas_gulf/30w099/streamid_rasterindex.csv')
                                          
     """
-    rapid_input =  '/Users/rdchlads/tethysdev/tethysapp-erfp_tool/rapid_files/ecmwf/korean_peninsula/korea/20150806.0'
-    arp.generate_streamflow_raster_from_rapid_output(streamid_rasterindex_file='/Users/rdchlads/autorapid/prepare_input/Korea/streamid_rasterindex.csv', 
+    rapid_input =  '/home/alan/work/rapid-io/output/korean_peninsula-korea/20150902.0'
+    arp.generate_streamflow_raster_from_rapid_output(streamid_rasterindex_file='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamid_rasterindex.csv', 
                                                      prediction_folder=rapid_input, 
-                                                     out_streamflow_raster='/Users/rdchlads/autorapid/prepare_input/Korea/streamflow_raster.tif',
+                                                     out_streamflow_raster='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamflow_raster.tif',
                                                      method_x="max", method_y="max")
-    """
