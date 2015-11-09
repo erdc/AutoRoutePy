@@ -368,6 +368,23 @@ class AutoRoutePrepare(object):
             
 if __name__ == "__main__":
     """
+    #-------------------------------------------------------------------------
+    #PREPARE MULTIPLE INPUT EXAMPLE
+    #-------------------------------------------------------------------------
+    from glob import glob
+    main_folder='/media/alan/Seagate Backup Plus Drive/autoroute-io/philippines-luzon/Phillipines_DEMs/*'
+    for direc in glob(main_folder):
+        arp = AutoRoutePrepare(glob(os.path.join(main_folder, direc, 'n*.dt2'))[0],
+                              '/media/alan/Seagate Backup Plus Drive/autoroute-io/philippines-luzon/DrainageLine.shp')
+        arp.rasterize_stream_shapefle(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
+                                     'HydroID')
+        arp.create_streamid_rasterindex_file(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
+                                             os.path.join(main_folder, direc, 'streamid_rasterindex.csv'))
+    """
+    """
+    #-------------------------------------------------------------------------
+    #RUN SINGLE EXAMPLE
+    #-------------------------------------------------------------------------
     main_dir = '/media/alan/Seagate Backup Plus Drive/AutoRoute_Small_Test/'
     arp = AutoRoutePrepare(os.path.join(main_dir, 'Spencer', 'sp_dem.asc'),
                            os.path.join(main_dir,'flowlines_comid_slope_partial.shp'))
