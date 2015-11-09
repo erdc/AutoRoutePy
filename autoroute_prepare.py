@@ -43,16 +43,16 @@ class AutoRoutePrepare(object):
 
         return target_ds
 
-    def rasterize_stream_shapefle(self, streamid_raster_path, stream_id):
+    def rasterize_stream_shapefle(self, streamid_raster_path, stream_id, input_dtype=gdal.GDT_Int32):
         """
-        Convert stream shapefile to raster with stream ids
+        Convert stream shapefile to raster with stream ids/slope
         """
         print "Converting stream shapefile to raster ..."
         # Open the data source
         stream_shapefile = ogr.Open(self.stream_shapefile_path)
         source_layer = stream_shapefile.GetLayer(0)
 
-        target_ds = self.generate_raster_from_dem(streamid_raster_path)
+        target_ds = self.generate_raster_from_dem(streamid_raster_path, dtype=input_dtype)
         # Rasterize
         err = gdal.RasterizeLayer(target_ds, [1], source_layer, options=["ATTRIBUTE=%s" % stream_id])
         if err != 0:
@@ -93,24 +93,23 @@ class AutoRoutePrepare(object):
             reader = csv.reader(csv_con, delimiter=delimiter)
             return list(reader)
 
-    def get_streamids_in_netcdf_file(self, reach_id_list, prediction_file):
+    def get_reordered_subset_streamid_index_list_from_netcdf(self, reach_id_list, prediction_file):
         """
-        Gets the subset streamid_index_list, reordered_streamid_list from the netcdf file
+        Gets the subset reordered_streamid_list from the netcdf file
         """
         data_nc = NET.Dataset(prediction_file, mode="r")
         com_ids = data_nc.variables['COMID'][:]
         data_nc.close()
-        try:
+        netcdf_reach_indices_list = []
+        for reach_id in reach_id_list:
             #get where streamids are in netcdf file
-            netcdf_reach_indices_list = np.where(np.in1d(com_ids, reach_id_list))[0]
-        except Exception as ex:
-            print ex
+            netcdf_reach_indices_list.append(np.where(com_ids==reach_id)[0][0])
      
-        return netcdf_reach_indices_list, com_ids[netcdf_reach_indices_list]                    
+        return np.array(netcdf_reach_indices_list)                  
 
-    def generate_streamflow_raster_from_rapid_output(self, streamid_rasterindex_file, 
-                                                     prediction_folder, out_streamflow_raster,
-                                                     method_x, method_y):
+    def generate_streamflow_raster_from_ecmwf_rapid_output(self, streamid_rasterindex_file, 
+                                                           prediction_folder, out_streamflow_raster,
+                                                           method_x, method_y):
         """
         Generate StreamFlow raster
         Create AutoRAPID INPUT from ECMWF predicitons
@@ -133,7 +132,8 @@ class AutoRoutePrepare(object):
      
      
         print "Finding streamid indices ..."
-        streamid_index_list, reordered_streamid_list = self.get_streamids_in_netcdf_file(streamid_list_unique, prediction_files[0])
+        reordered_streamid_index_list = self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_unique, 
+                                                                                                  prediction_files[0])
         data_nc = NET.Dataset(prediction_files[0], mode="r")
         time_length = len(data_nc.variables['time'][:])
         data_nc.close()
@@ -152,25 +152,25 @@ class AutoRoutePrepare(object):
                 qout_dimensions = data_nc.variables['Qout'].dimensions
                 if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
                     #data is raw rapid output
-                    data_values_2d_array = data_nc.variables['Qout'][:,streamid_index_list].transpose()
+                    data_values_2d_array = data_nc.variables['Qout'][:,reordered_streamid_index_list].transpose()
                 elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
                     #the data is CF compliant and has time=0 added to output
                     if ensemble_index == 52:
-                        streamflow_1hr = data_nc.variables['Qout'][streamid_index_list, :91:6]
+                        streamflow_1hr = data_nc.variables['Qout'][reordered_streamid_index_list, :91:6]
                         # calculate time series of 6 hr data from 3 hr data
-                        streamflow_3hr = data_nc.variables['Qout'][streamid_index_list, 92:109:2]
+                        streamflow_3hr = data_nc.variables['Qout'][reordered_streamid_index_list, 92:109:2]
                         # get the time series of 6 hr data
-                        streamflow_6hr =  data_nc.variables['Qout'][streamid_index_list, 109:]
+                        streamflow_6hr =  data_nc.variables['Qout'][reordered_streamid_index_list, 109:]
                         # concatenate all time series
                         data_values_2d_array = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr], axis=1)
                     else:
-                        data_values_2d_array = data_nc.variables['Qout'][streamid_index_list,:]
+                        data_values_2d_array = data_nc.variables['Qout'][reordered_streamid_index_list,:]
                 else:
                     print "Invalid ECMWF forecast file", prediction_file
                     data_nc.close()
                     continue
                 
-                for streamid_index, streamid in enumerate(reordered_streamid_list):
+                for streamid_index, streamid in enumerate(streamid_list_unique):
                     reach_prediciton_array_first_half[streamid_index][file_index] = data_values_2d_array[streamid_index][:first_half_size]
                     if(ensemble_index < 52):
                         reach_prediciton_array_second_half[streamid_index][file_index] = data_values_2d_array[streamid_index][first_half_size:]
@@ -184,16 +184,7 @@ class AutoRoutePrepare(object):
         streamflow_raster = self.generate_raster_from_dem(out_streamflow_raster, dtype=gdal.GDT_Float32)
         streamflow_raster_band = streamflow_raster.GetRasterBand(1)
         streamflow_raster_array = np.full((streamflow_raster_band.YSize, streamflow_raster_band.XSize), -9999, dtype=np.float32)
-        for streamid in streamid_list_unique:
-            try:
-                #get where streamids are in netcdf file
-                streamid_index = np.where(reordered_streamid_list==streamid)[0][0]
-            except Exception:
-                print "streamid", streamid, "not found in list. Skipping ..."
-                pass
-                continue
-            
-     
+        for streamid_index, streamid in enumerate(streamid_list_unique):
             #perform analysis on datasets
             all_data_first = reach_prediciton_array_first_half[streamid_index]
             all_data_second = reach_prediciton_array_second_half[streamid_index]
@@ -263,10 +254,69 @@ class AutoRoutePrepare(object):
         print "Writing data to streamflow raster ..."
         streamflow_raster_band.WriteArray(streamflow_raster_array)
     
-    def generate_raster_from_return_period_file(self, streamid_rasterindex_file, 
-                                                out_streamflow_raster,
-                                                return_period_file, 
-                                                return_period):
+    def generate_streamflow_raster_from_rapid_output(self, streamid_rasterindex_file, 
+                                                     rapid_output_file, 
+                                                     out_streamflow_raster):
+        """
+        Generate StreamFlow raster
+        Create AutoRAPID INPUT from single RAPID output
+     
+        """
+     
+        print "Generating Streamflow Raster ..."
+        #get list of streamidS
+        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file)
+        streamid_list_full = np.array([int(row[0]) for row in streamid_rasterindex_table])
+        streamid_list_unique = np.unique(streamid_list_full)
+     
+        #Get list of prediciton files
+     
+        print "Finding streamid indices ..."
+        reordered_streamid_index_list = self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_unique, 
+                                                                                                  rapid_output_file)
+
+        print "Extracting Data ..."
+        #get information from datasets
+        data_nc = NET.Dataset(rapid_output_file, mode="r")
+        qout_dimensions = data_nc.variables['Qout'].dimensions
+        qout_2d_array = []
+        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
+            qout_2d_array = data_nc.variables['Qout'][:,reordered_streamid_index_list].transpose()
+        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
+            qout_2d_array = data_nc.variables['Qout'][reordered_streamid_index_list, :]
+        else:
+            data_nc.close()
+            raise Exception("Invalid RAPID qout file {}".format(rapid_output_file))
+            
+        data_nc.close()
+     
+        print "Analyzing data ..."
+        streamflow_raster = self.generate_raster_from_dem(out_streamflow_raster, dtype=gdal.GDT_Float32)
+        streamflow_raster_band = streamflow_raster.GetRasterBand(1)
+        streamflow_raster_array = np.full((streamflow_raster_band.YSize, streamflow_raster_band.XSize), -9999, dtype=np.float32)
+        
+        for streamid_index, streamid in enumerate(streamid_list_unique):
+            #get peak/max
+            peak_flow = np.amax(qout_2d_array[streamid_index])
+     
+            #get where streamids are in the lookup grid id table
+            grid_index_table_indices = np.where(streamid_list_full==streamid)[0]
+            for grid_index_table_index in grid_index_table_indices:
+                row = int(streamid_rasterindex_table[grid_index_table_index][1])
+                col = int(streamid_rasterindex_table[grid_index_table_index][2])
+                try:
+                    streamflow_raster_array[row][col] = peak_flow
+                except IndexError:
+                    print row, col, peak_flow
+                    raise
+
+        print "Writing data to streamflow raster ..."
+        streamflow_raster_band.WriteArray(streamflow_raster_array)
+
+    def generate_streamflow_raster_from_return_period_file(self, streamid_rasterindex_file, 
+                                                           out_streamflow_raster,
+                                                           return_period_file, 
+                                                           return_period):
         """
         Generates return period raster from return period file
         """
@@ -314,18 +364,23 @@ class AutoRoutePrepare(object):
  
         print "Writing data to streamflow raster ..."
         streamflow_raster_band.WriteArray(streamflow_raster_array)
+
             
 if __name__ == "__main__":
-    arp = AutoRoutePrepare('/home/alan/work/autoroute/texas_gulf/30w099/grdn30w099_13/hdr.adf',
-                           '/home/alan/work/autoroute/texas_gulf/NHD_FlowLines_12/NHDFlowLine_12.shp')
-    """    arp.rasterize_stream_shapefle('/home/alan/work/autoroute/texas_gulf/30w099/rasterized_streamfile.tif',
-                                  'COMID')
-    arp.create_streamid_rasterindex_file('/home/alan/work/autoroute/texas_gulf/30w099/rasterized_streamfile.tif',
-                                         '/home/alan/work/autoroute/texas_gulf/30w099/streamid_rasterindex.csv')
-                                         
     """
-    rapid_input =  '/home/alan/work/rapid-io/output/korean_peninsula-korea/20150902.0'
+    main_dir = '/media/alan/Seagate Backup Plus Drive/AutoRoute_Small_Test/'
+    arp = AutoRoutePrepare(os.path.join(main_dir, 'Spencer', 'sp_dem.asc'),
+                           os.path.join(main_dir,'flowlines_comid_slope_partial.shp'))
+    arp.rasterize_stream_shapefle(os.path.join(main_dir,'rasterized_streamfile.tif'),
+                                  'COMID')
+    arp.rasterize_stream_shapefle(os.path.join(main_dir,'slope_raster.tif'),
+                                  'slope',
+                                  gdal.GDT_Float32)
+    arp.create_streamid_rasterindex_file(os.path.join(main_dir,'rasterized_streamfile.tif'),
+                                         os.path.join(main_dir,'streamid_rasterindex.csv'))
+                                         
+    rapid_input_file =  '/home/alan/work/rapid-io/output/korean_peninsula-korea/20151109.0/Qout_korean_peninsula_korea_1.nc'
     arp.generate_streamflow_raster_from_rapid_output(streamid_rasterindex_file='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamid_rasterindex.csv', 
-                                                     prediction_folder=rapid_input, 
-                                                     out_streamflow_raster='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamflow_raster.tif',
-                                                     method_x="max", method_y="max")
+                                                     rapid_output_file=rapid_input_file, 
+                                                     out_streamflow_raster='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamflow_raster.tif')
+    """
