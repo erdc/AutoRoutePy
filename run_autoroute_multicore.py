@@ -47,7 +47,8 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                             condor_log_directory="", #path to HTCondor logs
                             mode="multiprocess", #multiprocess or htcondor 
                             delete_flood_raster=True, #delete flood raster generated
-                            generate_floodmap_shapefile=True #generate a flood map shapefile
+                            generate_floodmap_shapefile=True, #generate a flood map shapefile
+                            wait_for_all_processes_to_finish=True
                             ):
     """
     This it the main AutoRoute-RAPID process
@@ -248,13 +249,16 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                                                      master_output_shapefile_shp_name,
                                                                                      delete_flood_raster)))
                 autoroute_job_info['job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
-                
-    #wait for all of the jobs to complete
-    if mode == "multiprocess":
-        pool.close()
-        pool.join()
-    else:
-        for htcondor_job in autoroute_job_info['htcondor_job_list']:
-            job.wait()
 
-    print "Time to complete entire AutoRoute process:", datetime.utcnow()-time_start_all
+    if wait_for_all_processes_to_finish:
+        #wait for all of the jobs to complete
+        if mode == "multiprocess":
+            pool.close()
+            pool.join()
+        else:
+            for htcondor_job in autoroute_job_info['htcondor_job_list']:
+                job.wait()
+    
+        print "Time to complete entire AutoRoute process:", datetime.utcnow()-time_start_all
+        
+    return autoroute_job_info
