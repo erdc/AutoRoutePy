@@ -15,7 +15,7 @@ from datetimr import datetime
 
 #local imports
 from imports.helper_functions import case_insensitive_file_search
-from htcondor_autorapid import run_AutoRoute
+from htcondor_autoroute import run_AutoRoute
 
 #package imports
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare 
