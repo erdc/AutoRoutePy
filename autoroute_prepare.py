@@ -140,6 +140,10 @@ class AutoRoutePrepare(object):
         first_half_size = 40
         if time_length == 41 or time_length > 60:
             first_half_size = 41
+        elif time_length == 85 or time_length == 125:
+            #run at full resolution for all
+            first_half_size = 65
+
         print "Extracting Data ..."
         reach_prediciton_array_first_half = np.zeros((len(streamid_list_unique),len(prediction_files),first_half_size))
         reach_prediciton_array_second_half = np.zeros((len(streamid_list_unique),len(prediction_files),20))
@@ -156,13 +160,24 @@ class AutoRoutePrepare(object):
                 elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
                     #the data is CF compliant and has time=0 added to output
                     if ensemble_index == 52:
-                        streamflow_1hr = data_nc.variables['Qout'][reordered_streamid_index_list, :91:6]
-                        # calculate time series of 6 hr data from 3 hr data
-                        streamflow_3hr = data_nc.variables['Qout'][reordered_streamid_index_list, 92:109:2]
-                        # get the time series of 6 hr data
-                        streamflow_6hr =  data_nc.variables['Qout'][reordered_streamid_index_list, 109:]
-                        # concatenate all time series
-                        data_values_2d_array = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr], axis=1)
+                        if first_half_size == 65:
+                            #convert to 3hr-6hr
+                            streamflow_1hr = data_nc.variables['Qout'][reordered_streamid_index_list, :90:3]
+                            # calculate time series of 6 hr data from 3 hr data
+                            streamflow_3hr_6hr = data_nc.variables['Qout'][reordered_streamid_index_list, 90:]
+                            # concatenate all time series
+                            data_values_2d_array = np.concatenate([streamflow_1hr, streamflow_3hr_6hr], axis=1)
+                        elif time_length == 125:
+                            #convert to 6hr
+                            streamflow_1hr = data_nc.variables['Qout'][reordered_streamid_index_list, :90:6]
+                            # calculate time series of 6 hr data from 3 hr data
+                            streamflow_3hr = data_nc.variables['Qout'][reordered_streamid_index_list, 90:109:2]
+                            # get the time series of 6 hr data
+                            streamflow_6hr =  data_nc.variables['Qout'][reordered_streamid_index_list, 109:]
+                            # concatenate all time series
+                            data_values_2d_array = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr], axis=1)
+                        else:
+                            data_values_2d_array = data_nc.variables['Qout'][reordered_streamid_index_list,:]
                     else:
                         data_values_2d_array = data_nc.variables['Qout'][reordered_streamid_index_list,:]
                 else:
