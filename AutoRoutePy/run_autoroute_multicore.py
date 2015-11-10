@@ -11,14 +11,14 @@ except ImportError:
     print "If you would like to use HTCondor, please install condorpy."
 
 import multiprocessing
-from datetimr import datetime
+from datetime import datetime
 
 #local imports
 from imports.helper_functions import case_insensitive_file_search
-from htcondor_autoroute import run_AutoRoute
+from multicore_worker_process import run_AutoRoute
 
 #package imports
-from AutoRoutePy.autoroute_prepare import AutoRoutePrepare 
+from autoroute_prepare import AutoRoutePrepare 
 
 #----------------------------------------------------------------------------------------
 # MULTIPROCESS FUNCTION
@@ -125,7 +125,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
 
     #keep list of jobs
     autoroute_job_info = {
-                            'multiprocess_job_input': [],
+                            'multiprocess_job_list': [],
                             'htcondor_job_list': [],
                             'htcondor_job_info': [],
                             'output_folder': autoroute_output_directory,
@@ -223,7 +223,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                     job.set('transfer_output_remaps',"\"%s = %s\"" % (output_flood_raster_name,
                                                                       master_output_flood_raster_name))
                                                                       
-                job.set('executable', os.path.join(local_scripts_location,'htcondor_autorapid.py'))
+                job.set('executable', os.path.join(local_scripts_location,'multicore_worker_process.py'))
                 job.set('transfer_input_files', "%s, %s" % (master_watershed_autoroute_input_directory, 
                                                             local_scripts_location))
                 job.set('initialdir', condor_log_directory)

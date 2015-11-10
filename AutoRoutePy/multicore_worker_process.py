@@ -2,11 +2,9 @@
 import os
 import sys
 
-#package imports
-from spt_erai_autorapid_process.AutoRoutePy.autoroute import AutoRoute 
-
 #local imports
-from spt_erai_autorapid_process.imports.helper_functions import case_insensitive_file_search
+from autoroute import AutoRoute 
+from imports.helper_functions import case_insensitive_file_search
 
 
 #------------------------------------------------------------------------------
