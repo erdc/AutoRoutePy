@@ -2,19 +2,21 @@
 python-based interface for AutoRoute
 
 ##Prereqs
-- AutoRoute (GDAL Branch) : https://github.com/erdc-cm/AutoRoute/tree/gdal
-- GDAL Python Library
+- AutoRoute (GDAL Branch). See: https://github.com/erdc-cm/AutoRoute/tree/gdal
+- NetCDF4. See step 2 in installation instructions: https://github.com/erdc-cm/RAPIDpy
+- (Optional) HTCondor & condorpy. See: https://github.com/erdc-cm/spt_ecmwf_autorapid_process
 
-##Installing GDAL Python
-If you did not install GDAL with python option:
+##Installation
 ```
-$ pip install gdal
+$ git clone https://github.com/erdc-cm/AutoRoute-py.git
+$ cd AutoRoute-py
 ```
-#Installing other Python libraries
-Note: condorpy and psutil are both optional, but you need at least one.
-If you want to use HTCondor, then install condorpy.
-If you want to use multiprocessing, then install psutil.
+To install:
+```
+python setup.py install
+```
+To develop:
+```
+python setup.py develop
+```
 
-```
-pip install condorpy psutil
-```
