@@ -7,7 +7,7 @@ from shutil import copy
 #local import
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from autoroute import AutoRoute
+from AutoRoutePy.autoroute import AutoRoute
 
 @raises(Exception)
 def test_generate_autoroute_input_file_invalid():
