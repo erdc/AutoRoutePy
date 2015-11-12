@@ -221,7 +221,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
 
             if mode == "htcondor":
                 #create job to run autoroute for each raster in watershed
-                job = CJob('job_autoroute_%s_%s' % (autoroute_input_directory, directory), tmplt.vanilla_transfer_files)
+                job = CJob('job_autoroute_%s_%s' % (os.path.basename(autoroute_input_directory), directory), tmplt.vanilla_transfer_files)
                 
 
                 if generate_floodmap_shapefile:
@@ -254,11 +254,11 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                             local_scripts_location))
                 job.set('initialdir', condor_log_directory)
                     
-                job.set('arguments', '%s %s %s %s' % (autoroute_executable_location,
-                                                      directory,
-                                                      output_flood_raster_name,
-                                                      output_shapefile_shp_name,
-                                                      delete_flood_raster))
+                job.set('arguments', '%s %s %s %s %s' % (autoroute_executable_location,
+                                                         directory,
+                                                         output_flood_raster_name,
+                                                         output_shapefile_shp_name,
+                                                         delete_flood_raster))
                 job.submit()
                 autoroute_job_info['htcondor_job_list'].append(job)
                 autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
