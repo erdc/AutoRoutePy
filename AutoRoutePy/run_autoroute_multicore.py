@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import multiprocessing
 import os
 
 HTCONDOR_ENABLED = False
@@ -7,12 +8,18 @@ try:
     from condorpy import Templates as tmplt
     HTCONDOR_ENABLED = True
 except ImportError:
-    print "condorpy unable to be imported. Only multiprocessing mode allowed."
-    print "If you would like to use HTCondor, please install condorpy."
+    print "condorpy unable to be imported. If you would like to use HTCondor", \
+          "mode, please install condorpy (i.e. pip install condorpy)."
+    pass
+
+try:
+    from psutil import virtual_memory
+except ImportError:
+    print "psutil unable to be imported. If you would like to use multiprocessing", \
+          "mode, please install psutil (i.e. pip install psutil)."
+    pass
 
 from datetime import datetime
-import multiprocessing
-from psutil import virtual_memory
 
 #local imports
 from imports.helper_functions import case_insensitive_file_search
@@ -63,19 +70,6 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
     #--------------------------------------------------------------------------
     #Validate Inputs
     #--------------------------------------------------------------------------
-    total_cpus = multiprocessing.cpu_count()
-    mem = virtual_memory()
-    recommended_max_num_cpus = int(mem.total  * 1e-9 / 8)
-    if num_cpus <= 0:
-        num_cpus = min(recommended_max_num_cpus, total_cpus)
-    if num_cpus > total_cpus:
-        num_cpus = total_cpus
-        print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
-    if num_cpus > recommended_max_num_cpus:
-        print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
-                recommended_max_num_cpus, "). This may cause memory issues ..."
-        
-
     valid_mode_list = ['multiprocess','htcondor']
     if mode not in valid_mode_list:
         raise Exception("ERROR: Invalid multiprocess mode {}. Only multiprocess or htcondor allowed ...".format(mode))
@@ -152,6 +146,19 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
 
     pool = None
     if mode == "multiprocess":
+        #set number of cpus to use (recommended 8 GB per cpu)
+        total_cpus = multiprocessing.cpu_count()
+        mem = virtual_memory()
+        recommended_max_num_cpus = int(mem.total  * 1e-9 / 8)
+        if num_cpus <= 0:
+            num_cpus = min(recommended_max_num_cpus, total_cpus)
+        if num_cpus > total_cpus:
+            num_cpus = total_cpus
+            print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
+        if num_cpus > recommended_max_num_cpus:
+            print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
+                    recommended_max_num_cpus, "). This may cause memory issues ..."
+        #start pool
         pool = multiprocessing.Pool(num_cpus)
 
 
