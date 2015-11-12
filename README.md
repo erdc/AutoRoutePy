@@ -6,6 +6,15 @@ python-based interface for AutoRoute
 - GDAL Python Library
 
 ##Installing GDAL Python
+If you did not install GDAL with python option:
 ```
 $ pip install gdal
+```
+#Installing other Python libraries
+Note: condorpy and psutil are both optional, but you need at least one.
+If you want to use HTCondor, then install condorpy.
+If you want to use multiprocessing, then install psutil.
+
+```
+pip install condorpy psutil
 ```
