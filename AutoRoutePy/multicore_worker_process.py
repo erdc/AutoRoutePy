@@ -3,8 +3,8 @@ import os
 import sys
 
 #local imports
-from autoroute import AutoRoute 
-from imports.helper_functions import case_insensitive_file_search
+from AutoRoutePy.autoroute import AutoRoute 
+from AutoRoutePy.helper_functions import case_insensitive_file_search
 
 
 #------------------------------------------------------------------------------

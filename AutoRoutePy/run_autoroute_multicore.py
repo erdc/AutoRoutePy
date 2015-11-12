@@ -250,8 +250,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                                       master_output_flood_raster_name))
                                                                       
                 job.set('executable', os.path.join(local_scripts_location,'multicore_worker_process.py'))
-                job.set('transfer_input_files', "%s, %s" % (master_watershed_autoroute_input_directory, 
-                                                            local_scripts_location))
+                job.set('transfer_input_files', "%s" % (master_watershed_autoroute_input_directory))
                 job.set('initialdir', condor_log_directory)
                     
                 job.set('arguments', '%s %s %s %s %s' % (autoroute_executable_location,
