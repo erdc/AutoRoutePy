@@ -12,5 +12,5 @@ setup(
     download_url='https://github.com/erdc-cm/AutoRoute-py/tarballs/0.0.1',
     license='MIT',
     packages=['AutoRoutePy'],
-    install_requires=['condorpy', 'psutil', 'gdal', 'netCDF4', 'gdal'],
+    install_requires=['condorpy', 'psutil', 'gdal', 'netCDF4'],
 )
