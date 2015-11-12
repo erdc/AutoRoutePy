@@ -295,8 +295,9 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
             pool.close()
             pool.join()
         else:
-            for htcondor_job in autoroute_job_info['htcondor_job_list']:
+            for htcondor_job_index, htcondor_job in enumerate(autoroute_job_info['htcondor_job_list']):
                 htcondor_job.wait()
+                print "READY:", autoroute_job_info['htcondor_job_info'][htcondor_job_index]['output_shapefile_base_name']
     
         print "Time to complete entire AutoRoute process:", datetime.utcnow()-time_start_all
         
