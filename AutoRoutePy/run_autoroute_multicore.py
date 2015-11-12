@@ -10,8 +10,9 @@ except ImportError:
     print "condorpy unable to be imported. Only multiprocessing mode allowed."
     print "If you would like to use HTCondor, please install condorpy."
 
-import multiprocessing
 from datetime import datetime
+import multiprocessing
+from psutil import virtual_memory
 
 #local imports
 from imports.helper_functions import case_insensitive_file_search
@@ -23,23 +24,27 @@ from autoroute_prepare import AutoRoutePrepare
 #----------------------------------------------------------------------------------------
 # MULTIPROCESS FUNCTION
 #----------------------------------------------------------------------------------------
-def run_autoroute_mutliprocess_worker(args):
+def run_autoroute_multiprocess_worker(args):
     """
     Run autoroute on one of multiple cores
     """
-    
-    run_AutoRoute(autoroute_executable_location=args[0],
-                  autoroute_input_path=args[1],
-                  out_flood_raster_name=args[2],
-                  out_shapefile_name=args[3],
-                  delete_flood_raster=args[4])
+    try:
+        run_AutoRoute(autoroute_executable_location=args[0],
+                      autoroute_input_path=args[1],
+                      out_flood_raster_name=args[2],
+                      out_shapefile_name=args[3],
+                      delete_flood_raster=args[4])
+    except Exception as ex:
+        print ex
+        
+    return args[2], args[3]
                   
 #----------------------------------------------------------------------------------------
 # MAIN PROCESS
 #----------------------------------------------------------------------------------------
 def run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
                             autoroute_input_directory, #path to AutoRoute input directory
-                            autoroute_output_directory, #path to AutoRoute input directory
+                            autoroute_output_directory, #path to AutoRoute output directory
                             rapid_output_directory="", #path to ECMWF RAPID input/output directory
                             return_period="", # return period name in return period file
                             return_period_file="", # return period file generated from RAPID historical run
@@ -48,7 +53,8 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                             mode="multiprocess", #multiprocess or htcondor 
                             delete_flood_raster=True, #delete flood raster generated
                             generate_floodmap_shapefile=True, #generate a flood map shapefile
-                            wait_for_all_processes_to_finish=True
+                            wait_for_all_processes_to_finish=True,
+                            num_cpus=-17
                             ):
     """
     This it the main AutoRoute-RAPID process
@@ -57,6 +63,19 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
     #--------------------------------------------------------------------------
     #Validate Inputs
     #--------------------------------------------------------------------------
+    total_cpus = multiprocessing.cpu_count()
+    mem = virtual_memory()
+    recommended_max_num_cpus = int(mem.total  * 1e-9 / 8)
+    if num_cpus <= 0:
+        num_cpus = min(recommended_max_num_cpus, total_cpus)
+    if num_cpus > total_cpus:
+        num_cpus = total_cpus
+        print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
+    if num_cpus > recommended_max_num_cpus:
+        print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
+                recommended_max_num_cpus, "). This may cause memory issues ..."
+        
+
     valid_mode_list = ['multiprocess','htcondor']
     if mode not in valid_mode_list:
         raise Exception("ERROR: Invalid multiprocess mode {}. Only multiprocess or htcondor allowed ...".format(mode))
@@ -133,7 +152,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
 
     pool = None
     if mode == "multiprocess":
-        pool = multiprocessing.Pool()
+        pool = multiprocessing.Pool(num_cpus)
 
 
     #--------------------------------------------------------------------------
@@ -235,29 +254,43 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                       delete_flood_raster))
                 job.submit()
                 autoroute_job_info['htcondor_job_list'].append(job)
-                autoroute_job_info['job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
+                autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
 
             else: #mode == "multiprocess":
-
+            
                 if not generate_floodmap_shapefile:
                     master_output_shapefile_shp_name = ""
 
-                autoroute_job_info['multiprocess_job_list'].append(pool.apply_async(run_autoroute_mutliprocess_worker, 
-                                                                                    (autoroute_executable_location,
-                                                                                     master_watershed_autoroute_input_directory,
-                                                                                     master_output_flood_raster_name,
-                                                                                     master_output_shapefile_shp_name,
-                                                                                     delete_flood_raster)))
-                autoroute_job_info['job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
-
+                autoroute_job_info['multiprocess_job_list'].append((autoroute_executable_location,
+                                                                    master_watershed_autoroute_input_directory,
+                                                                    master_output_flood_raster_name,
+                                                                    master_output_shapefile_shp_name,
+                                                                    delete_flood_raster))
+                """
+                #For testing function serially
+                run_autoroute_multiprocess_worker((autoroute_executable_location,
+                                                  master_watershed_autoroute_input_directory,
+                                                  master_output_flood_raster_name,
+                                                  master_output_shapefile_shp_name,
+                                                  delete_flood_raster))
+                """
+    
+    if mode == "multiprocess":
+        autoroute_job_info['multiprocess_worker_list'] = pool.imap_unordered(run_autoroute_multiprocess_worker, 
+                                                                             autoroute_job_info['multiprocess_job_list'], 
+                                                                             chunksize=1)
+            
     if wait_for_all_processes_to_finish:
         #wait for all of the jobs to complete
         if mode == "multiprocess":
+            for multi_job_output in autoroute_job_info['multiprocess_worker_list']:
+                print "READY:", multi_job_output[1]
+            #just in case ...
             pool.close()
             pool.join()
         else:
             for htcondor_job in autoroute_job_info['htcondor_job_list']:
-                job.wait()
+                htcondor_job.wait()
     
         print "Time to complete entire AutoRoute process:", datetime.utcnow()-time_start_all
         
