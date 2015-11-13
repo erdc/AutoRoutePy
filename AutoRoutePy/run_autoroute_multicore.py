@@ -149,7 +149,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
         #set number of cpus to use (recommended 8 GB per cpu)
         total_cpus = multiprocessing.cpu_count()
         mem = virtual_memory()
-        recommended_max_num_cpus = int(mem.total  * 1e-9 / 8)
+        recommended_max_num_cpus = max(1, int(mem.total  * 1e-9 / 8))
         if num_cpus <= 0:
             num_cpus = min(recommended_max_num_cpus, total_cpus)
         if num_cpus > total_cpus:
