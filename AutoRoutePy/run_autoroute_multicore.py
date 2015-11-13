@@ -213,7 +213,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
             
             output_shapefile_base_name = '%s_%s' % (autoroute_job_name, directory)
             #set up flood raster name
-            output_flood_raster_name = '%s.tif' % output_shapefile_base_name
+            output_flood_raster_name = '%s_raster.tif' % output_shapefile_base_name
             master_output_flood_raster_name = os.path.join(autoroute_output_directory, output_flood_raster_name)
             #set up flood shapefile name
             output_shapefile_shp_name = '%s.shp' % output_shapefile_base_name
