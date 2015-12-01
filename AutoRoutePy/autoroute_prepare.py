@@ -21,6 +21,17 @@ class AutoRoutePrepare(object):
         self.elevation_dem_path = elevation_dem_path
         self.stream_shapefile_path = stream_shapefile_path
     
+    def csv_to_list(self, csv_file, delimiter=','):
+        """
+        Reads in a CSV file and returns the contents as list,
+        where every row is stored as a sublist, and each element
+        in the sublist represents 1 cell in the table.
+     
+        """
+        with open(csv_file, 'rb') as csv_con:
+            reader = csv.reader(csv_con, delimiter=delimiter)
+            return list(reader)
+
     def generate_raster_from_dem(self, raster_path, dtype=gdal.GDT_Int32):
         """
         Create an empty raster based on the DEM file
@@ -58,40 +69,124 @@ class AutoRoutePrepare(object):
         if err != 0:
             raise Exception("error rasterizing layer: %s" % err)
 
-    def create_streamid_rasterindex_file(self, streamid_raster_path, 
-                                         output_streamid_rasterindex_file):
+#TO BE DEPRICATED SOON
+#    def create_streamid_rasterindex_file(self, streamid_raster_path, 
+#                                        output_streamid_rasterindex_file):
+#        """
+#       Create file linking stream ID to raster index
+#        Ex.
+#        StreamID, RasterIndex
+#        555, 1
+#        555, 3
+#        556, 7
+#        ...
+#        """
+#        print "Generating streamID rasterIndex file ..."
+#        streamid_raster = gdal.Open(streamid_raster_path)
+#       streamid_raster_band = streamid_raster.GetRasterBand(1)
+#        cols = streamid_raster_band.XSize
+#        rows = streamid_raster_band.YSize
+#        data = streamid_raster_band.ReadAsArray(0, 0, cols, rows)
+#        with open(output_streamid_rasterindex_file, 'wb') as outfile:
+#            writer = csv.writer(outfile)
+#            writer.writerow(["StreamID", "RasterIndex"])
+#            for i in xrange(rows):
+#                for j in xrange(cols):
+#                    if data[i,j] >= 0:
+#                        writer.writerow([int(data[i,j]), i*cols + j])
+    
+
+    def append_slope_to_streamid_rasterindex_file(self, streamid_rasterindex_file):
         """
-        Create file linking stream ID to raster index
-        Ex.
-        StreamID, row, col 
-        555, 1, 2
-        555, 7, 6
-        556, 1, 1
-        ...
+        Add the slope attribute to the stream direction file
         """
-        print "Generating streamID rasterIndex file ..."
-        streamid_raster = gdal.Open(streamid_raster_path)
-        streamid_raster_band = streamid_raster.GetRasterBand(1)
-        cols = streamid_raster_band.XSize
-        rows = streamid_raster_band.YSize
-        data = streamid_raster_band.ReadAsArray(0, 0, cols, rows)
-        with open(output_streamid_rasterindex_file, 'wb') as outfile:
-            writer = csv.writer(outfile)
-            for i in range(0, rows):
-                for j in range(0, cols):
-                    if data[i,j] >= 0:
-                        writer.writerow([int(data[i,j]), i , j])
-                    
-    def csv_to_list(self, csv_file, delimiter=','):
-        """
-        Reads in a CSV file and returns the contents as list,
-        where every row is stored as a sublist, and each element
-        in the sublist represents 1 cell in the table.
-     
-        """
-        with open(csv_file, 'rb') as csv_con:
-            reader = csv.reader(csv_con, delimiter=delimiter)
-            return list(reader)
+        def GetExtent(gt,cols,rows):
+            ''' Return list of corner coordinates from a geotransform
+            
+            @type gt:   C{tuple/list}
+            @param gt: geotransform
+            @type cols:   C{int}
+            @param cols: number of columns in the dataset
+            @type rows:   C{int}
+            @param rows: number of rows in the dataset
+            @rtype:    C{[float,...,float]}
+            @return:   coordinates of each corner
+            '''
+            ext=[]
+            xarr=[0,cols]
+            yarr=[0,rows]
+            
+            for px in xarr:
+                for py in yarr:
+                    x=gt[0]+(px*gt[1])+(py*gt[2])
+                    y=gt[3]+(px*gt[4])+(py*gt[5])
+                    ext.append([x,y])
+                    #print x,y
+                yarr.reverse()
+            return ext
+
+        def ReprojectCoords(coords,src_srs,tgt_srs):
+            ''' Reproject a list of x,y coordinates.
+                
+                @type geom:     C{tuple/list}
+                @param geom:    List of [[x,y],...[x,y]] coordinates
+                @type src_srs:  C{osr.SpatialReference}
+                @param src_srs: OSR SpatialReference object
+                @type tgt_srs:  C{osr.SpatialReference}
+                @param tgt_srs: OSR SpatialReference object
+                @rtype:         C{tuple/list}
+                @return:        List of transformed [[x,y],...[x,y]] coordinates
+                '''
+            trans_coords=[]
+            transform = osr.CoordinateTransformation( src_srs, tgt_srs)
+            for x,y in coords:
+                x,y,z = transform.TransformPoint(x,y)
+                trans_coords.append([x,y])
+            return trans_coords
+
+        stream_shapefile = ogr.Open(self.stream_shapefile_path)
+        stream_shp_layer = stream_shapefile.GetLayer()
+
+        #get extent from elevation raster to filter data
+        try:
+            print "Attempting to filter ..."
+            elevation_raster = gdal.Open(self.elevation_dem_path)
+
+            gt=elevation_raster.GetGeoTransform()
+            cols = elevation_raster.RasterXSize
+            rows = elevation_raster.RasterYSize
+            raster_ext = GetExtent(gt,cols,rows)
+
+            src_srs=osr.SpatialReference()
+            src_srs.ImportFromWkt(elevation_raster.GetProjection())
+            tgt_srs = stream_shp_layer.GetSpatialRef()
+
+            raster_ext = ReprojectCoords(raster_ext,src_srs,tgt_srs)
+            
+            #read in the shapefile and get the data for slope
+            string_rast_ext = ["{0} {1}".format(x,y) for x,y in raster_ext]
+            wkt = "POLYGON (({0}))".format(",".join(string_rast_ext))
+            stream_shp_layer.SetSpatialFilter(ogr.CreateGeometryFromWkt(wkt))
+        except Exception as ex:
+            print ex
+            print "Skipping filter. This may take longer ..."
+            pass
+
+        print "Writing output to file ..."
+        stream_direction_rasterindex_table = self.csv_to_list(streamid_rasterindex_file, " ")[1:]
+        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
+        stream_id_list = np.array([row[3] for row in stream_direction_rasterindex_table], dtype=np.int32)
+        with open(streamid_rasterindex_file, 'wb') as outfile:
+            writer = csv.writer(outfile, delimiter=" ")
+            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope"])
+            for feature in stream_shp_layer:
+                #find all raster indices associates with the comid
+                raster_index_list = np.where(stream_id_list==int(feature.GetField("COMID")))[0]
+                #add slope associated with comid    
+                slope = feature.GetField("slope")
+                for raster_index in raster_index_list:
+                    writer.writerow(stream_direction_rasterindex_table[raster_index][:5] + [slope])
+
 
     def get_reordered_subset_streamid_index_list_from_netcdf(self, reach_id_list, prediction_file):
         """
@@ -107,9 +202,9 @@ class AutoRoutePrepare(object):
      
         return np.array(netcdf_reach_indices_list)                  
 
-    def generate_streamflow_raster_from_ecmwf_rapid_output(self, streamid_rasterindex_file, 
-                                                           prediction_folder, out_streamflow_raster,
-                                                           method_x, method_y):
+    def append_streamflow_from_ecmwf_rapid_output(self, streamid_rasterindex_file, 
+                                                  prediction_folder, out_streamflow_raster,
+                                                  method_x, method_y):
         """
         Generate StreamFlow raster
         Create AutoRAPID INPUT from ECMWF predicitons
@@ -120,8 +215,11 @@ class AutoRoutePrepare(object):
      
         print "Generating Streamflow Raster ..."
         #get list of streamidS
+        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file, " ")[1:]
+        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
+
         streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file)
-        streamid_list_full = np.array([int(row[0]) for row in streamid_rasterindex_table])
+        streamid_list_full = np.array([row[3] for row in streamid_rasterindex_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
      
         #Get list of prediciton files
@@ -193,83 +291,76 @@ class AutoRoutePrepare(object):
                         else:
                             reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:]
      
-        print "Analyzing data ..."
-        streamflow_raster = self.generate_raster_from_dem(out_streamflow_raster, dtype=gdal.GDT_Float32)
-        streamflow_raster_band = streamflow_raster.GetRasterBand(1)
-        streamflow_raster_array = np.full((streamflow_raster_band.YSize, streamflow_raster_band.XSize), -9999, dtype=np.float32)
-        for streamid_index, streamid in enumerate(streamid_list_unique):
-            #perform analysis on datasets
-            all_data_first = reach_prediciton_array_first_half[streamid_index]
-            all_data_second = reach_prediciton_array_second_half[streamid_index]
-     
-            series = []
-     
-            if "mean" in method_x:
-                #get mean
-                mean_data_first = np.mean(all_data_first, axis=0)
-                mean_data_second = np.mean(all_data_second, axis=0)
-                series = np.concatenate([mean_data_first,mean_data_second])
-                if "std" in method_x:
-                    #get std dev
-                    std_dev_first = np.std(all_data_first, axis=0)
-                    std_dev_second = np.std(all_data_second, axis=0)
-                    std_dev = np.concatenate([std_dev_first,std_dev_second])
-                    if method_x == "mean_plus_std":
-                        #mean plus std
-                        series += std_dev
-                    elif method_x == "mean_minus_std":
-                        #mean minus std
-                        series -= std_dev
-     
-            elif method_x == "max":
-                #get max
-                max_data_first = np.amax(all_data_first, axis=0)
-                max_data_second = np.amax(all_data_second, axis=0)
-                series = np.concatenate([max_data_first,max_data_second])
-            elif method_x == "min":
-                #get min
-                min_data_first = np.amin(all_data_first, axis=0)
-                min_data_second = np.amin(all_data_second, axis=0)
-                series = np.concatenate([min_data_first,min_data_second])
-     
-            data_val = 0
-            if "mean" in method_y:
-                #get mean
-                data_val = np.mean(series)
-                if "std" in method_y:
-                    #get std dev
-                    std_dev = np.std(series)
-                    if method_y == "mean_plus_std":
-                        #mean plus std
-                        data_val += std_dev
-                    elif method_y == "mean_minus_std":
-                        #mean minus std
-                        data_val -= std_dev
-     
-            elif method_y == "max":
-                #get max
-                data_val = np.amax(series)
-            elif method_y == "min":
-                #get min
-                data_val = np.amin(series)
-     
-            #get where streamids are in the lookup grid id table
-            grid_index_table_indices = np.where(streamid_list_full==streamid)[0]
-            for grid_index_table_index in grid_index_table_indices:
-                row = int(streamid_rasterindex_table[grid_index_table_index][1])
-                col = int(streamid_rasterindex_table[grid_index_table_index][2])
-                try:
-                    streamflow_raster_array[row][col] = data_val
-                except IndexError:
-                    print row, col, data_val
-                    raise
+        print "Analyzing data and writing output ..."
+        with open(streamid_rasterindex_file, 'wb') as outfile:
+            writer = csv.writer(outfile, delimiter=" ")
+            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
 
-        print "Writing data to streamflow raster ..."
-        streamflow_raster_band.WriteArray(streamflow_raster_array)
+            for streamid_index, streamid in enumerate(streamid_list_unique):
+                #perform analysis on datasets
+                all_data_first = reach_prediciton_array_first_half[streamid_index]
+                all_data_second = reach_prediciton_array_second_half[streamid_index]
+         
+                series = []
+         
+                if "mean" in method_x:
+                    #get mean
+                    mean_data_first = np.mean(all_data_first, axis=0)
+                    mean_data_second = np.mean(all_data_second, axis=0)
+                    series = np.concatenate([mean_data_first,mean_data_second])
+                    if "std" in method_x:
+                        #get std dev
+                        std_dev_first = np.std(all_data_first, axis=0)
+                        std_dev_second = np.std(all_data_second, axis=0)
+                        std_dev = np.concatenate([std_dev_first,std_dev_second])
+                        if method_x == "mean_plus_std":
+                            #mean plus std
+                            series += std_dev
+                        elif method_x == "mean_minus_std":
+                            #mean minus std
+                            series -= std_dev
+         
+                elif method_x == "max":
+                    #get max
+                    max_data_first = np.amax(all_data_first, axis=0)
+                    max_data_second = np.amax(all_data_second, axis=0)
+                    series = np.concatenate([max_data_first,max_data_second])
+                elif method_x == "min":
+                    #get min
+                    min_data_first = np.amin(all_data_first, axis=0)
+                    min_data_second = np.amin(all_data_second, axis=0)
+                    series = np.concatenate([min_data_first,min_data_second])
+         
+                data_val = 0
+                if "mean" in method_y:
+                    #get mean
+                    data_val = np.mean(series)
+                    if "std" in method_y:
+                        #get std dev
+                        std_dev = np.std(series)
+                        if method_y == "mean_plus_std":
+                            #mean plus std
+                            data_val += std_dev
+                        elif method_y == "mean_minus_std":
+                            #mean minus std
+                            data_val -= std_dev
+         
+                elif method_y == "max":
+                    #get max
+                    data_val = np.amax(series)
+                elif method_y == "min":
+                    #get min
+                    data_val = np.amin(series)
+         
+                #get where streamids are in the lookup grid id table
+                raster_index_list = np.where(streamid_list_full==streamid)[0]
+                for raster_index in raster_index_list:
+                    writer.writerow(stream_direction_rasterindex_table[raster_index][:6] + [data_val])
+
     
-    def generate_streamflow_raster_from_rapid_output(self, streamid_rasterindex_file, 
-                                                     rapid_output_file, 
-                                                     out_streamflow_raster):
+    def append_streamflow_from_rapid_output(self, streamid_rasterindex_file, 
+                                            rapid_output_file, 
+                                            out_streamflow_raster):
         """
         Generate StreamFlow raster
         Create AutoRAPID INPUT from single RAPID output
@@ -278,12 +369,13 @@ class AutoRoutePrepare(object):
      
         print "Generating Streamflow Raster ..."
         #get list of streamidS
-        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file)
-        streamid_list_full = np.array([int(row[0]) for row in streamid_rasterindex_table])
+        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file)[1:]
+        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
+
+        streamid_list_full = np.array([row[3] for row in streamid_rasterindex_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
      
         #Get list of prediciton files
-     
         print "Finding streamid indices ..."
         reordered_streamid_index_list = self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_unique, 
                                                                                                   rapid_output_file)
@@ -303,33 +395,23 @@ class AutoRoutePrepare(object):
             
         data_nc.close()
      
-        print "Analyzing data ..."
-        streamflow_raster = self.generate_raster_from_dem(out_streamflow_raster, dtype=gdal.GDT_Float32)
-        streamflow_raster_band = streamflow_raster.GetRasterBand(1)
-        streamflow_raster_array = np.full((streamflow_raster_band.YSize, streamflow_raster_band.XSize), -9999, dtype=np.float32)
-        
-        for streamid_index, streamid in enumerate(streamid_list_unique):
-            #get peak/max
-            peak_flow = np.amax(qout_2d_array[streamid_index])
-     
-            #get where streamids are in the lookup grid id table
-            grid_index_table_indices = np.where(streamid_list_full==streamid)[0]
-            for grid_index_table_index in grid_index_table_indices:
-                row = int(streamid_rasterindex_table[grid_index_table_index][1])
-                col = int(streamid_rasterindex_table[grid_index_table_index][2])
-                try:
-                    streamflow_raster_array[row][col] = peak_flow
-                except IndexError:
-                    print row, col, peak_flow
-                    raise
+        print "Analyzing data and appending to list ..."
+        with open(streamid_rasterindex_file, 'wb') as outfile:
+            writer = csv.writer(outfile, delimiter=" ")
+            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            for streamid_index, streamid in enumerate(streamid_list_unique):
+                #get peak/max
+                peak_flow = np.amax(qout_2d_array[streamid_index])
+         
+                #get where streamids are in the lookup grid id table
+                raster_index_list = np.where(streamid_list_full==streamid)[0]
+                for raster_index in raster_index_list:
+                    writer.writerow(stream_direction_rasterindex_table[raster_index][:6] + [peak_flow])
 
-        print "Writing data to streamflow raster ..."
-        streamflow_raster_band.WriteArray(streamflow_raster_array)
-
-    def generate_streamflow_raster_from_return_period_file(self, streamid_rasterindex_file, 
-                                                           out_streamflow_raster,
-                                                           return_period_file, 
-                                                           return_period):
+    def append_streamflow_from_return_period_file(self, streamid_rasterindex_file, 
+                                                  out_streamflow_raster,
+                                                  return_period_file, 
+                                                  return_period):
         """
         Generates return period raster from return period file
         """
@@ -348,42 +430,33 @@ class AutoRoutePrepare(object):
         return_period_nc.close()
         
         #get where streamids are in the lookup grid id table
-        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file)
-        streamid_list_full = np.array([int(row[0]) for row in streamid_rasterindex_table])
+        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file)[1:]
+        streamid_list_full = np.array([row[3] for row in streamid_rasterindex_table], dtype=np.int32))
         streamid_list_unique = np.unique(streamid_list_full)
-        print "Analyzing data ..."
-        streamflow_raster = self.generate_raster_from_dem(out_streamflow_raster, dtype=gdal.GDT_Float32)
-        streamflow_raster_band = streamflow_raster.GetRasterBand(1)
-        streamflow_raster_array = np.full((streamflow_raster_band.YSize, streamflow_raster_band.XSize), -9999, dtype=np.float32)
+        print "Analyzing data and appending to list ..."
         
-        for streamid in streamid_list_unique:
-            try:
-                #get where streamids are in netcdf file
-                streamid_index = np.where(return_period_comids==streamid)[0][0]
-            except Exception:
-                print "streamid", streamid, "not found in list. Skipping ..."
-                raise
-                
-            grid_index_table_indices = np.where(streamid_list_full==streamid)[0]
-            for grid_index_table_index in grid_index_table_indices:
-                row = int(streamid_rasterindex_table[grid_index_table_index][1])
-                col = int(streamid_rasterindex_table[grid_index_table_index][2])
+        with open(streamid_rasterindex_file, 'wb') as outfile:
+            writer = csv.writer(outfile, delimiter=" ")
+            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            for streamid in streamid_list_unique:
                 try:
-                    streamflow_raster_array[row][col] = return_period_data[streamid_index]
-                except IndexError:
-                    print row, col, return_period_data[streamid_index]
+                    #get where streamids are in netcdf file
+                    streamid_index = np.where(return_period_comids==streamid)[0][0]
+                except Exception:
+                    print "streamid", streamid, "not found in list. Skipping ..."
                     raise
-
- 
-        print "Writing data to streamflow raster ..."
-        streamflow_raster_band.WriteArray(streamflow_raster_array)
+                    
+                #get where streamids are in the lookup grid id table
+                raster_index_list = np.where(streamid_list_full==streamid)[0]
+                for raster_index in raster_index_list:
+                    writer.writerow(stream_direction_rasterindex_table[raster_index][:6] + [return_period_data[streamid_index]])
 
             
 if __name__ == "__main__":
-    """
     #-------------------------------------------------------------------------
     #PREPARE MULTIPLE INPUT EXAMPLE
     #-------------------------------------------------------------------------
+    """
     from glob import glob
     main_folder='/media/alan/Seagate Backup Plus Drive/autoroute-io/philippines-luzon/Phillipines_DEMs/*'
     for direc in glob(main_folder):
@@ -391,26 +464,25 @@ if __name__ == "__main__":
                               '/media/alan/Seagate Backup Plus Drive/autoroute-io/philippines-luzon/DrainageLine.shp')
         arp.rasterize_stream_shapefle(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
                                      'HydroID')
-        arp.create_streamid_rasterindex_file(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
-                                             os.path.join(main_folder, direc, 'streamid_rasterindex.csv'))
-    """
+        arp.append_slope_to_streamid_rasterindex_file(os.path.join(main_dir,'test_prepare_input','stream_direction_row_index.csv'))
     """
     #-------------------------------------------------------------------------
     #RUN SINGLE EXAMPLE
     #-------------------------------------------------------------------------
-    main_dir = '/media/alan/Seagate Backup Plus Drive/AutoRoute_Small_Test/'
-    arp = AutoRoutePrepare(os.path.join(main_dir, 'Spencer', 'sp_dem.asc'),
+    """
+    main_dir = '/media/chluser/Seagate Backup Plus Drive/AutoRoute_Small_Test'
+    arp = AutoRoutePrepare(os.path.join(main_dir, 'Spencer', 'sp_flow.asc'),
                            os.path.join(main_dir,'flowlines_comid_slope_partial.shp'))
     arp.rasterize_stream_shapefle(os.path.join(main_dir,'rasterized_streamfile.tif'),
                                   'COMID')
-    arp.rasterize_stream_shapefle(os.path.join(main_dir,'slope_raster.tif'),
-                                  'slope',
-                                  gdal.GDT_Float32)
-    arp.create_streamid_rasterindex_file(os.path.join(main_dir,'rasterized_streamfile.tif'),
-                                         os.path.join(main_dir,'streamid_rasterindex.csv'))
-                                         
+    #TODO: 
+    #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
+    #Method to generate streamid_rasterindex file with new AutoRoute
+
+    arp.append_slope_to_streamid_rasterindex_file(os.path.join(main_dir,'test_prepare_input','stream_direction_row_index.csv'))
+
     rapid_input_file =  '/home/alan/work/rapid-io/output/korean_peninsula-korea/20151109.0/Qout_korean_peninsula_korea_1.nc'
-    arp.generate_streamflow_raster_from_rapid_output(streamid_rasterindex_file='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamid_rasterindex.csv', 
-                                                     rapid_output_file=rapid_input_file, 
-                                                     out_streamflow_raster='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamflow_raster.tif')
+    arp.append_streamflow_from_rapid_output(streamid_rasterindex_file=os.path.join(main_dir,'test_prepare_input','stream_direction_row_index.csv'),
+                                            rapid_output_file=rapid_input_file,
+                                            out_streamflow_raster='/home/alan/work/autoroute-io/input/korean_peninsula-korea/korea1/streamflow_raster.tif')
     """
