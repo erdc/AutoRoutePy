@@ -33,24 +33,20 @@ def run_AutoRoute(autoroute_executable_location,
 
     #get the land use information
     try:
-        land_use_raster = case_insensitive_file_search(autoroute_input_path, r'land_use\.(?!prj)')
-        land_use_manning_n_table = case_insensitive_file_search(autoroute_input_path, r'land_use_manning_n_table\.txt')
+        manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?!prj)')
     except Exception:
-        land_use_raster = ""
-        land_use_manning_n_table = ""    
-        print "Land use raster/manning n table not found. Ignoring these files ..."
+        manning_n_raster = ""
+        print "Manning n table not found. Ignoring this file ..."
         pass
     
     auto_mng = AutoRoute(autoroute_executable_location,
-                         stream_file=case_insensitive_file_search(autoroute_input_path, r'streamflow_raster\.(?!prj)'),
-                         dem_file=elevation_raster,
-                         shp_out_file=out_flood_raster_name,
-                         lu_raster=land_use_raster,
-                         lu_manning_n=land_use_manning_n_table
+                         dem_raster_file_path=elevation_raster,
+                         stream_info_file_path=case_insensitive_file_search(autoroute_input_path, r'stream_info\.txt'),
+                         out_flood_map_raster_path=out_flood_raster_name,
                          )
                          
     if out_shapefile_name:             
-        auto_mng.update_parameters(shp_out_shapefile=out_shapefile_name)
+        auto_mng.update_parameters(out_flood_map_shapefile_path=out_shapefile_name)
         
     auto_mng.run_autoroute(autoroute_input_file=case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.txt'))
 
@@ -73,7 +69,7 @@ def run_AutoRoute_HTCondor_directory(autoroute_executable_location,
     os.rename(autoroute_input_directory, "autoroute_input")
     node_path = os.path.dirname(os.path.realpath(__file__))
     autoroute_input_path = os.path.join(node_path, "autoroute_input")
-    shp_out_raster = os.path.join(node_path, out_flood_raster_name)
+    out_flood_raster = os.path.join(node_path, out_flood_raster_name)
     
     full_out_shapefile_name = ""
     if out_shapefile_name:
@@ -81,7 +77,7 @@ def run_AutoRoute_HTCondor_directory(autoroute_executable_location,
     
     run_AutoRoute(autoroute_executable_location,
                   autoroute_input_path,
-                  shp_out_raster,
+                  out_flood_raster,
                   out_shapefile_name=full_out_shapefile_name,
                   delete_flood_raster=delete_flood_raster)
     

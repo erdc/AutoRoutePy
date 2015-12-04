@@ -173,13 +173,6 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
             print "Running AutoRoute for watershed:", autoroute_job_name, "sub directory:", directory
             
             if RUN_CASE > 0:
-                streamflow_raster_path = os.path.join(master_watershed_autoroute_input_directory, 'streamflow_raster.tif')
-                #remove old streamflow raster if exists
-                try:
-                    old_streamflow_raster_path = case_insensitive_file_search(master_watershed_autoroute_input_directory, 'streamflow_raster\.(?!prj)')
-                    os.remove(old_streamflow_raster_path)
-                except Exception:
-                    pass
                 #create input streamflow raster for AutoRoute
                 try:
                     elevation_raster = case_insensitive_file_search(master_watershed_autoroute_input_directory, r'elevation\.(?!prj)')
@@ -193,22 +186,19 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                     pass
                 
                 arp = AutoRoutePrepare(elevation_raster)
-                streamid_rasterindex_file = case_insensitive_file_search(master_watershed_autoroute_input_directory, 
-                                                                         r'streamid_rasterindex\.csv')
+                stream_info_file = case_insensitive_file_search(master_watershed_autoroute_input_directory,
+                                                                r'stream_info\.txt')
                 if RUN_CASE == 1:
-                    arp.generate_streamflow_raster_from_ecmwf_rapid_output(streamid_rasterindex_file=streamid_rasterindex_file,
-                                                                           prediction_folder=rapid_output_directory, 
-                                                                           out_streamflow_raster=streamflow_raster_path,
-                                                                           method_x="mean_plus_std", method_y="max")
+                    arp.append_streamflow_from_ecmwf_rapid_output(stream_info_file=stream_info_file,
+                                                                  prediction_folder=rapid_output_directory,
+                                                                  method_x="mean_plus_std", method_y="max")
                 elif RUN_CASE == 2:
-                    arp.generate_streamflow_raster_from_return_period_file(streamid_rasterindex_file=streamid_rasterindex_file, 
-                                                                           out_streamflow_raster=streamflow_raster_path,
+                    arp.generate_streamflow_raster_from_return_period_file(stream_info_file=stream_info_file,
                                                                            return_period_file=return_period_file,
                                                                            return_period=return_period)
                 elif RUN_CASE == 3:
-                    arp.generate_streamflow_raster_from_rapid_output(streamid_rasterindex_file=streamid_rasterindex_file,
-                                                                     rapid_output_file=rapid_output_file, 
-                                                                     out_streamflow_raster=streamflow_raster_path)
+                    arp.append_streamflow_from_rapid_output(stream_info_file=stream_info_file,
+                                                            rapid_output_file=rapid_output_file)
                     
             
             output_shapefile_base_name = '%s_%s' % (autoroute_job_name, directory)

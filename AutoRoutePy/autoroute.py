@@ -132,15 +132,17 @@ class AutoRoute(object):
 
 
 if __name__ == "__main__":
+    """
     input_folder = "/home/alan/work/autoroute-io/input/erdc_texas_gulf_region-huc_2_12/30w098"
     auto_mng = AutoRoute('/home/alan/work/scripts/AutoRouteGDAL/source_code/autoroute',
-                         stream_file=os.path.join(input_folder, "streamflow_raster.tif"),
-                         dem_file=os.path.join(input_folder, "elevation", "hdr.adf"),
-                         SHP_Out_File=os.path.join(input_folder,"flood.tif"),
-                         SHP_Out_Shapefile=os.path.join(input_folder,"flood_Shp.shp"),
+                         dem_raster_file_path=os.path.join(input_folder, "elevation", "hdr.adf"),
+                         stream_info_file_path=os.path.join(input_folder, "stream_info.txt"),
+                         out_flood_map_raster_path=os.path.join(input_folder,"flood_map_raster.tif"),
+                         out_flood_map_shapefile_path=os.path.join(input_folder,"flood_map_shapefile.shp"),
                          )
                          
     auto_mng.run_autoroute(autoroute_input_file=os.path.join(input_folder, "AUTOROUTE_INPUT_FILE.txt"))
+    """
             
             
             
