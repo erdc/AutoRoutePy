@@ -11,59 +11,27 @@ class AutoRoute(object):
     the AutoRoute program. Additionally, it can perform some GDAL functions
     """
     #REQUIRED ARGS
-    stream_file = "" #input stream raster
-    dem_file = "" #input dem raster
-    spatial_units = "" #input spatial units
+    dem_raster_file_path=""
+    stream_info_file_path=""
     
     #OPTIONAL ARGS
     #set default parameters
-    shp_out_file = "" #output flood raster name
-    shp_out_shapefile = "" #output flood shapefile name
-    dep_out_file = "" #output flood depth raster name
-    flood_pnts_name = "" #output flood points file name
-    flow_file = "" #flow list variables
-    flow_list = "" #flow file variables
-    lu_raster = "" #land use raster
-    lu_manning_n = "" #land use mannings n table
-    x_section_dist = None #default is 1500.0 (sampling x-section distance from center)
-    use_prev_d_4_xs = None #defaults is 0 (false)
-    q_limit = None #default is 0
-    man_n = None #defailt is 0.035
-    print_xsections = None #defaults is 0 (false)
-    print_vel_dep = None #defaults is 0 (false)
-    gen_dir_dist = None #default is 10 (true)
-    gen_slope_dist = None #default is 10 (true)
-    weight_angles = None #default is 0 (uniform weight)
-    thin_non_perpx = None #default is 0 (don't thin out X-Sections)
-    elim_non_conctx = None #default is 0 (don't eliminate disconnected X-Sections)
-    dist_x_pastwe = None #default is 0 (# cells past waterdepth for X-Section)
-    str_limit_val = None #default is 0 (limit of string value - don't have to NULL other stream cells)
-    up_str_limit_val = None # default is 9999999999999999 (stream mask threshold)
-    degree_manip = None #default is 0.0 (how many degrees are manupulated to catch all boundaries)
-    degree_interval = None #default is 1000.0 (interval between degrees if manipulation)
-    low_spot_range = None #default is 2 (range cross section will go to find lowest spot on x-section)
-    print_strm_mask = None #default is 0 (false)
-    pnts_just_3 = None #default is false
-    uniform_flow = None #this is the default (Q = Flow_Alpha)
-    proportional_flow = None #(Q = Flow_Alpha * Str_Val[r][c])
-    exponential_flow = None #(Q = Flow_Alpha * DA^Flow_Beta)
-    expon_precip_flow = None #(Q = Flow_Alpha * DA^Flow_Beta Flow_Prec_Const^Flow_Prec_Exp)
-    log10_regress_flow = None #(Q = 10 ^ ( Flow_Gamma + Flow_Alpha * DA^Flow_Beta ))
-    flow_alpha = None #default is 1.0
-    flow_beta = None #default is 1.0
-    flow_gamma = None #default is 0.0
-    flow_prec_const = None #default is 1.0
-    flow_prec_exp = None #default is 1.0
-    convert_da_to_sqft = None #default is 1.0 (convert area km2 to sqft)
-    convert_da_to_acre = None #default is 1.0 (convert area km2 to acre)
-    convert_da_to_sqmi = None #default is 1.0 (convert area km2 to sqmi)
-    convert_q_cfs_to_cms = None #default is 1.0 (convert flow cfs to cms)
-    str_is_m2 = None #default is 0.0 (units STR values are in - ex. 30 means 30mx30m)
-
-    #list of attributes which require no value    
-    _no_value_attr_list = ["uniform_flow", "proportional_flow", "exponential_flow", "expon_precip_flow", "log10_regress_flow"]
-
     
+    manning_n_raster_file_path=""
+    x_sect_dist = None
+    double default_manning_n = None
+    Low_Spot_Range = None #num cells in center to look to find the lowest point in a cross-section
+    use_prev_d_4_xsect = None #use previous depths to calculate XS if value is slightly over
+    degree_manipulation = None #This is how many degrees (both positive and negative) that are manipulated to catch all of the boundaries
+    degree_interval = None #This is the interval between the degrees of maniputaiton
+    cells_past_water_depth = None #cells past the waterdepth for each X-Sections
+    q_limit = None #The Q Limit Factor limits erroneous results by stopping too much overflow
+    eliminate_xsection = None #ELIMINATE the Cross-Sections that don't fully Connect
+    xsect_file_path = ""
+    out_flood_map_raster_path = ""
+    out_flood_depth_raster_path = ""
+    out_flood_map_shapefile_path = ""
+
     def __init__(self, autoroute_executable_location, **kwargs):
         """
         Initialize the class with variables given by the user
@@ -79,9 +47,6 @@ class AutoRoute(object):
         #set arguments based off of user input
         for key, value in kwargs.iteritems():
             key = key.lower()
-            #debuf\g
-            #import pdb
-            #pdb.set_trace()
             if key in dir(self) and not key.startswith('_'):
                 setattr(self, key, value)
             else:
@@ -120,8 +85,6 @@ class AutoRoute(object):
                 value = None
                 if len(line_split)>1:
                     value = line_split[1]
-                elif attr in self._no_value_attr_list:
-                    value = True
                 #add attribute if exists
                 if attr in dir(self) \
                     and not attr.startswith('_'):
