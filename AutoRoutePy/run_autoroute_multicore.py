@@ -185,9 +185,15 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                         pass
                     pass
                 
+                try:
+                    stream_info_file = case_insensitive_file_search(master_watershed_autoroute_input_directory,
+                                                                    r'stream_info\.txt')
+                except Exception:
+                    print "Stream info file not found. Skipping run ..."
+                    continue
+                    pass
+                
                 arp = AutoRoutePrepare(elevation_raster)
-                stream_info_file = case_insensitive_file_search(master_watershed_autoroute_input_directory,
-                                                                r'stream_info\.txt')
                 if RUN_CASE == 1:
                     arp.append_streamflow_from_ecmwf_rapid_output(stream_info_file=stream_info_file,
                                                                   prediction_folder=rapid_output_directory,
