@@ -1,0 +1,3 @@
+out_flood_map_raster_path /Volumes/AEGIS/AutoRAPID_TestCase/GaysMills/flood_map_raster.tif
+dem_raster_file_path /Volumes/AEGIS/AutoRAPID_TestCase/GaysMills/DEM/imgn44w091_13.img
+stream_info_file_path /Volumes/AEGIS/AutoRAPID_TestCase/GaysMills/stream_info_all_use.txt

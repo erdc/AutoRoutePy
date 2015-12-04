@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import csv
+import datetime
 import netCDF4 as NET
 import numpy as np
 import os
 from osgeo import gdal, ogr, osr
+from subprocess import Popen, PIPE
 
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
@@ -85,7 +87,7 @@ class AutoRoutePrepare(object):
         process = Popen([self.autoroute_executable_location,
                          stream_raster_file_name,
                          stream_info_file,
-                         search_radius],
+                         str(search_radius)],
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
@@ -100,7 +102,6 @@ class AutoRoutePrepare(object):
 
 
     def generate_manning_n_raster(self, land_use_raster,
-                                  dem_raster,
                                   input_manning_n_table,
                                   output_manning_n_raster,
                                   default_manning_n):
@@ -115,10 +116,10 @@ class AutoRoutePrepare(object):
         print "Running AutoRoute prepare ..."
         process = Popen([self.autoroute_executable_location,
                          land_use_raster,
-                         dem_raster,
+                         self.elevation_dem_path,
                          input_manning_n_table,
                          output_manning_n_raster,
-                         default_manning_n],
+                         str(default_manning_n)],
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
@@ -210,8 +211,8 @@ class AutoRoutePrepare(object):
         print "Writing output to file ..."
         stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
-        stream_id_list = np.array([row[3] for row in stream_direction_rasterindex_table], dtype=np.int32)
-        with open(streamid_rasterindex_file, 'wb') as outfile:
+        stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
+        with open(stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope"])
             for feature in stream_shp_layer:
@@ -398,9 +399,7 @@ class AutoRoutePrepare(object):
         """
         Generate StreamFlow raster
         Create AutoRAPID INPUT from single RAPID output
-     
         """
-     
         print "Generating Streamflow Raster ..."
         #get list of streamidS
         stream_info_table = self.csv_to_list(stream_info_file)[1:]
@@ -408,7 +407,7 @@ class AutoRoutePrepare(object):
 
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
-     
+
         #Get list of prediciton files
         print "Finding streamid indices ..."
         reordered_streamid_index_list = self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_unique, 
@@ -428,7 +427,7 @@ class AutoRoutePrepare(object):
             raise Exception("Invalid RAPID qout file {}".format(rapid_output_file))
             
         data_nc.close()
-     
+
         print "Analyzing data and appending to list ..."
         with open(streamid_rasterindex_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
@@ -436,7 +435,7 @@ class AutoRoutePrepare(object):
             for streamid_index, streamid in enumerate(streamid_list_unique):
                 #get peak/max
                 peak_flow = np.amax(qout_2d_array[streamid_index])
-         
+
                 #get where streamids are in the lookup grid id table
                 raster_index_list = np.where(streamid_list_full==streamid)[0]
                 for raster_index in raster_index_list:
@@ -464,7 +463,7 @@ class AutoRoutePrepare(object):
         
         #get where streamids are in the lookup grid id table
         stream_info_table = self.csv_to_list(stream_info_file)[1:]
-        streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32))
+        streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
         print "Analyzing data and appending to list ..."
         
@@ -506,18 +505,17 @@ if __name__ == "__main__":
     #RUN SINGLE EXAMPLE
     #-------------------------------------------------------------------------
     """
-    main_dir = '/media/chluser/Seagate Backup Plus Drive/AutoRoute_Small_Test'
+    main_dir = '/Volumes/AEGIS/AutoRAPID_TestCase/GaysMills'
     arp = AutoRoutePrepare(autoroute_executable_location,
-                           os.path.join(main_dir, 'Spencer', 'sp_flow.asc'),
-                           os.path.join(main_dir,'flowlines_comid_slope_partial.shp'))
+                           os.path.join(main_dir, 'DEM', 'imgn44w091_13.img'),
+                           os.path.join(main_dir,'NHDPlus_Thinned_with_Slopes', 'Mississippi_NHDFLowline_Thinn1_5.shp'))
+                           
     arp.rasterize_stream_shapefle(os.path.join(main_dir,'rasterized_streamfile.tif'),
                                   'COMID')
-    #TODO: 
     #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
-    arp.generate_manning_n_raster(land_use_raster=os.path.join(main_dir, 'land_use.tif'),
-                                  dem_raster=os.path.join(main_dir, 'elevation.tif'),
-                                  input_manning_n_table=os.path.join(main_dir, 'manning_n_table.txt'),
-                                  output_manning_n_raster=os.path.join(main_dir, 'manning_n_table.tif'),
+    arp.generate_manning_n_raster(land_use_raster=os.path.join(main_dir, 'LandCover', 'AutoRAPID_LULC.tif'),
+                                  input_manning_n_table=os.path.join(main_dir, 'Manning_N_Values', 'AR_Manning_n_for_NLCD_LOW.txt'),
+                                  output_manning_n_raster=os.path.join(main_dir, 'manning_n.tif'),
                                   default_manning_n=0.035)
 
     #Method to generate streamid_rasterindex file with new AutoRoute
@@ -525,8 +523,8 @@ if __name__ == "__main__":
                                                  os.path.join(main_dir,'stream_info.txt'),
                                                  search_radius=1)
 
-    arp.append_slope_to_streamid_rasterindex_file(os.path.join(main_dir,'stream_info.txt'))
-
+    arp.append_slope_to_stream_info_file(os.path.join(main_dir,'stream_info.txt'))
+    
     rapid_input_file =  '/home/alan/work/rapid-io/output/korean_peninsula-korea/20151109.0/Qout_korean_peninsula_korea_1.nc'
     arp.append_streamflow_from_rapid_output(os.path.join(main_dir,'stream_info.txt'),
                                             rapid_output_file=rapid_input_file)

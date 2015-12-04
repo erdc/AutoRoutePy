@@ -19,7 +19,7 @@ class AutoRoute(object):
     
     manning_n_raster_file_path=""
     x_sect_dist = None
-    double default_manning_n = None
+    default_manning_n = None
     Low_Spot_Range = None #num cells in center to look to find the lowest point in a cross-section
     use_prev_d_4_xsect = None #use previous depths to calculate XS if value is slightly over
     degree_manipulation = None #This is how many degrees (both positive and negative) that are manipulated to catch all of the boundaries
@@ -132,17 +132,15 @@ class AutoRoute(object):
 
 
 if __name__ == "__main__":
-    """
-    input_folder = "/home/alan/work/autoroute-io/input/erdc_texas_gulf_region-huc_2_12/30w098"
-    auto_mng = AutoRoute('/home/alan/work/scripts/AutoRouteGDAL/source_code/autoroute',
-                         dem_raster_file_path=os.path.join(input_folder, "elevation", "hdr.adf"),
-                         stream_info_file_path=os.path.join(input_folder, "stream_info.txt"),
-                         out_flood_map_raster_path=os.path.join(input_folder,"flood_map_raster.tif"),
-                         out_flood_map_shapefile_path=os.path.join(input_folder,"flood_map_shapefile.shp"),
+    main_dir = '/Volumes/AEGIS/AutoRAPID_TestCase/GaysMills'
+    auto_mng = AutoRoute('/Users/rdchlads/scripts/AutoRouteClass/source_code/autoroute',
+                         dem_raster_file_path=os.path.join(main_dir, 'DEM', 'imgn44w091_13.img'),
+                         stream_info_file_path=os.path.join(main_dir,'stream_info_all_use.txt'),
+                         out_flood_map_raster_path=os.path.join(main_dir,"flood_map_raster.tif"),
+                         #out_flood_map_shapefile_path=os.path.join(main_dir,"flood_map_shapefile.shp"),
                          )
                          
-    auto_mng.run_autoroute(autoroute_input_file=os.path.join(input_folder, "AUTOROUTE_INPUT_FILE.txt"))
-    """
-            
+    auto_mng.run_autoroute()
+
             
             
