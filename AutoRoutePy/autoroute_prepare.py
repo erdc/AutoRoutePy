@@ -57,7 +57,7 @@ class AutoRoutePrepare(object):
 
         return target_ds
 
-    def rasterize_stream_shapefle(self, streamid_raster_path, stream_id, input_dtype=gdal.GDT_Int32):
+    def rasterize_stream_shapefile(self, streamid_raster_path, stream_id, input_dtype=gdal.GDT_Int32):
         """
         Convert stream shapefile to raster with stream ids/slope
         """
@@ -505,19 +505,18 @@ if __name__ == "__main__":
     #RUN SINGLE EXAMPLE
     #-------------------------------------------------------------------------
     """
-    main_dir = '/Volumes/AEGIS/AutoRAPID_TestCase/GaysMills'
+    main_dir = '/Users/rdchlads/scripts/AutoRoute-py/tests/original'
     arp = AutoRoutePrepare(autoroute_executable_location,
-                           os.path.join(main_dir, 'DEM', 'imgn44w091_13.img'),
-                           os.path.join(main_dir,'NHDPlus_Thinned_with_Slopes', 'Mississippi_NHDFLowline_Thinn1_5.shp'))
+                           os.path.join(main_dir, 'elevation.asc'),
+                           os.path.join(main_dir, 'drainage_line.shp'))
                            
-    arp.rasterize_stream_shapefle(os.path.join(main_dir,'rasterized_streamfile.tif'),
-                                  'COMID')
+    arp.rasterize_stream_shapefile(os.path.join(main_dir,'rasterized_streamfile.tif'),
+                                   'COMID')
     #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
     arp.generate_manning_n_raster(land_use_raster=os.path.join(main_dir, 'LandCover', 'AutoRAPID_LULC.tif'),
                                   input_manning_n_table=os.path.join(main_dir, 'Manning_N_Values', 'AR_Manning_n_for_NLCD_LOW.txt'),
                                   output_manning_n_raster=os.path.join(main_dir, 'manning_n.tif'),
                                   default_manning_n=0.035)
-
     #Method to generate streamid_rasterindex file with new AutoRoute
     arp.generate_stream_info_file_with_direction(os.path.join(main_dir,'rasterized_streamfile.tif'),
                                                  os.path.join(main_dir,'stream_info.txt'),
@@ -527,5 +526,4 @@ if __name__ == "__main__":
     
     rapid_input_file =  '/home/alan/work/rapid-io/output/korean_peninsula-korea/20151109.0/Qout_korean_peninsula_korea_1.nc'
     arp.append_streamflow_from_rapid_output(os.path.join(main_dir,'stream_info.txt'),
-                                            rapid_output_file=rapid_input_file)
     """
