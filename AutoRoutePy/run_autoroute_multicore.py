@@ -199,9 +199,9 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                                   prediction_folder=rapid_output_directory,
                                                                   method_x="mean_plus_std", method_y="max")
                 elif RUN_CASE == 2:
-                    arp.generate_streamflow_raster_from_return_period_file(stream_info_file=stream_info_file,
-                                                                           return_period_file=return_period_file,
-                                                                           return_period=return_period)
+                    arp.append_streamflow_from_return_period_file(stream_info_file=stream_info_file,
+                                                                  return_period_file=return_period_file,
+                                                                  return_period=return_period)
                 elif RUN_CASE == 3:
                     arp.append_streamflow_from_rapid_output(stream_info_file=stream_info_file,
                                                             rapid_output_file=rapid_output_file)
