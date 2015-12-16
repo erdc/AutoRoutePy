@@ -132,7 +132,7 @@ class AutoRoutePrepare(object):
 
         print "Time to run: %s" % (datetime.datetime.utcnow()-time_start)
 
-    def append_slope_to_stream_info_file(self, stream_info_file):
+    def append_slope_to_stream_info_file(self, stream_info_file, stream_id_field="COMID", slope_field="slope"):
         """
         Add the slope attribute to the stream direction file
         """
@@ -217,11 +217,11 @@ class AutoRoutePrepare(object):
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope"])
             for feature in stream_shp_layer:
                 #find all raster indices associates with the comid
-                raster_index_list = np.where(stream_id_list==int(feature.GetField("COMID")))[0]
+                raster_index_list = np.where(stream_id_list==int(feature.GetField(stream_id_field)))[0]
                 #add slope associated with comid    
-                slope = feature.GetField("slope")
+                slope = feature.GetField(slope_field)
                 for raster_index in raster_index_list:
-                    writer.writerow(stream_info_table[raster_index][:5] + [slope])
+                    writer.writerow(stream_info_table[raster_index][:5] + [slope] + stream_info_table[raster_index][6:])
 
 
     def get_reordered_subset_streamid_index_list_from_netcdf(self, reach_id_list, prediction_file):
