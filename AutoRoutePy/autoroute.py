@@ -20,7 +20,7 @@ class AutoRoute(object):
     manning_n_raster_file_path=""
     x_sect_dist = None
     default_manning_n = None
-    Low_Spot_Range = None #num cells in center to look to find the lowest point in a cross-section
+    low_spot_range = None #num cells in center to look to find the lowest point in a cross-section
     use_prev_d_4_xsect = None #use previous depths to calculate XS if value is slightly over
     degree_manipulation = None #This is how many degrees (both positive and negative) that are manipulated to catch all of the boundaries
     degree_interval = None #This is the interval between the degrees of maniputaiton
