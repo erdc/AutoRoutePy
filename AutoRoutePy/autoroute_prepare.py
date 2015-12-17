@@ -484,26 +484,26 @@ class AutoRoutePrepare(object):
 
             
 if __name__ == "__main__":
-    autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
+    #autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
     #-------------------------------------------------------------------------
     #PREPARE MULTIPLE INPUT EXAMPLE
     #-------------------------------------------------------------------------
-    
+    """
     from glob import glob
-    main_folder='/home/alan/work/autoroute-io/input/korean_peninsula-48k/*'
+    main_folder='/home/alan/work/autoroute-io/input/philippines-luzon/*'
     for direc in glob(main_folder):
         local_dir = os.path.join(main_folder, direc)
-        print local_dir
         arp = AutoRoutePrepare(autoroute_executable_location,
                                glob(os.path.join(local_dir, '*.dt2'))[0],
-                              '/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/korean_peninsula-48k/Shapefiles/Koreas_30m_DrainageLine_WGS_UTM52N.shp')
-        arp.rasterize_stream_shapefile(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
-                                      'HydroID')
+                              '/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/phillipines-luzon/DrainageLine.shp')
+        #arp.rasterize_stream_shapefile(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
+        #                              'HydroID')
         arp.generate_stream_info_file_with_direction(os.path.join(local_dir,'rasterized_streamfile.tif'),
                                                      os.path.join(local_dir,'stream_info.txt'),
                                                      search_radius=1)
         
         arp.append_slope_to_stream_info_file(os.path.join(local_dir,'stream_info.txt'),'HydroID' ,'Avg_Slope')
+    """
     #-------------------------------------------------------------------------
     #RUN SINGLE EXAMPLE
     #-------------------------------------------------------------------------
