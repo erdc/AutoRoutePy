@@ -201,7 +201,7 @@ class AutoRoutePrepare(object):
             
             #read in the shapefile and get the data for slope
             string_rast_ext = ["{0} {1}".format(x,y) for x,y in raster_ext]
-            wkt = "POLYGON (({0}))".format(",".join(string_rast_ext))
+            wkt = "POLYGON (({0},{1}))".format(",".join(string_rast_ext), string_rast_ext[0])
             stream_shp_layer.SetSpatialFilter(ogr.CreateGeometryFromWkt(wkt))
         except Exception as ex:
             print ex
@@ -251,10 +251,9 @@ class AutoRoutePrepare(object):
      
         print "Generating Streamflow Raster ..."
         #get list of streamidS
-        streamid_rasterindex_table = self.csv_to_list(streamid_rasterindex_file, " ")[1:]
-        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
+        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
 
-        stream_info_table = self.csv_to_list(stream_info_file)
+        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
      
@@ -328,7 +327,7 @@ class AutoRoutePrepare(object):
                             reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:]
      
         print "Analyzing data and writing output ..."
-        with open(streamid_rasterindex_file, 'wb') as outfile:
+        with open(stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
 
@@ -429,7 +428,7 @@ class AutoRoutePrepare(object):
         data_nc.close()
 
         print "Analyzing data and appending to list ..."
-        with open(streamid_rasterindex_file, 'wb') as outfile:
+        with open(stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             for streamid_index, streamid in enumerate(streamid_list_unique):
@@ -467,7 +466,7 @@ class AutoRoutePrepare(object):
         streamid_list_unique = np.unique(streamid_list_full)
         print "Analyzing data and appending to list ..."
         
-        with open(streamid_rasterindex_file, 'wb') as outfile:
+        with open(stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             for streamid in streamid_list_unique:
@@ -485,22 +484,26 @@ class AutoRoutePrepare(object):
 
             
 if __name__ == "__main__":
-    #autoroute_executable_location = '/Users/rdchlads/scripts/AutoRouteClass/source_code/autoroute'
+    autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
     #-------------------------------------------------------------------------
     #PREPARE MULTIPLE INPUT EXAMPLE
     #-------------------------------------------------------------------------
     
-    """
     from glob import glob
-    main_folder='/media/alan/Seagate Backup Plus Drive/autoroute-io/philippines-luzon/Phillipines_DEMs/*'
+    main_folder='/home/alan/work/autoroute-io/input/korean_peninsula-48k/*'
     for direc in glob(main_folder):
+        local_dir = os.path.join(main_folder, direc)
+        print local_dir
         arp = AutoRoutePrepare(autoroute_executable_location,
-                               glob(os.path.join(main_folder, direc, 'n*.dt2'))[0],
-                              '/media/alan/Seagate Backup Plus Drive/autoroute-io/philippines-luzon/DrainageLine.shp')
-        arp.rasterize_stream_shapefle(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
-                                     'HydroID')
-        arp.append_slope_to_streamid_rasterindex_file(os.path.join(main_dir,'test_prepare_input','stream_direction_row_index.csv'))
-    """
+                               glob(os.path.join(local_dir, '*.dt2'))[0],
+                              '/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/korean_peninsula-48k/Shapefiles/Koreas_30m_DrainageLine_WGS_UTM52N.shp')
+        arp.rasterize_stream_shapefile(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
+                                      'HydroID')
+        arp.generate_stream_info_file_with_direction(os.path.join(local_dir,'rasterized_streamfile.tif'),
+                                                     os.path.join(local_dir,'stream_info.txt'),
+                                                     search_radius=1)
+        
+        arp.append_slope_to_stream_info_file(os.path.join(local_dir,'stream_info.txt'),'HydroID' ,'Avg_Slope')
     #-------------------------------------------------------------------------
     #RUN SINGLE EXAMPLE
     #-------------------------------------------------------------------------
