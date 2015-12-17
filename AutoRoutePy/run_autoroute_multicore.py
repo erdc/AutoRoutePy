@@ -193,7 +193,8 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                     continue
                     pass
                 
-                arp = AutoRoutePrepare(elevation_raster)
+                arp = AutoRoutePrepare(autoroute_executable_location,
+                                       elevation_raster)
                 if RUN_CASE == 1:
                     arp.append_streamflow_from_ecmwf_rapid_output(stream_info_file=stream_info_file,
                                                                   prediction_folder=rapid_output_directory,
