@@ -496,8 +496,8 @@ if __name__ == "__main__":
         arp = AutoRoutePrepare(autoroute_executable_location,
                                glob(os.path.join(local_dir, '*.dt2'))[0],
                               '/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/phillipines-luzon/DrainageLine.shp')
-        #arp.rasterize_stream_shapefile(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
-        #                              'HydroID')
+        arp.rasterize_stream_shapefile(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
+                                      'HydroID')
         arp.generate_stream_info_file_with_direction(os.path.join(local_dir,'rasterized_streamfile.tif'),
                                                      os.path.join(local_dir,'stream_info.txt'),
                                                      search_radius=1)
