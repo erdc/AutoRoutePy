@@ -53,7 +53,7 @@ def test_generate_autoroute_input_file():
                              stream_info_file_path="stream_info.txt",
                              dem_raster_file_path="elevation.tif",
                              out_flood_map_shapefile_path="right_here.shp",
-                             x_sect_dist=5000.0,
+                             x_section_dist=5000.0,
                              degree_manipulation=3.1,
                              low_spot_range=15,
                              q_limit=1.01,

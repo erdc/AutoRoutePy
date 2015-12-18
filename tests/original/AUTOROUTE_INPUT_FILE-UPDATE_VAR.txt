@@ -1,4 +1,4 @@
-x_sect_dist 5000.0
+x_section_dist 5000.0
 degree_manipulation 3.1
 low_spot_range 15
 q_limit 1.01

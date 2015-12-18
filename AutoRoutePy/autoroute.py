@@ -18,7 +18,7 @@ class AutoRoute(object):
     #set default parameters
     
     manning_n_raster_file_path=""
-    x_sect_dist = None
+    x_section_dist = None
     default_manning_n = None
     low_spot_range = None #num cells in center to look to find the lowest point in a cross-section
     use_prev_d_4_xsect = None #use previous depths to calculate XS if value is slightly over
