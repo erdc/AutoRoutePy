@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+##
+##  post_process.py
+##  AutoRoutePy
+##
+##  Created by Alan D. Snow 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
 from glob import glob
 import os
 from osgeo import ogr, osr

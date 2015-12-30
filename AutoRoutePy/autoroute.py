@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+##
+##  autoroute.py
+##  AutoRoutePy
+##
+##  Created by Alan D. Snow 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
 import datetime
 import os
 from subprocess import Popen, PIPE

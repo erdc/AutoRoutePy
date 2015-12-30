@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+##
+##  test_prepare.py
+##  AutoRoutePy
+##
+##  Created by Alan D. Snow 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
+
 from filecmp import cmp as fcmp
 from nose.tools import ok_
 import numpy.testing as npt

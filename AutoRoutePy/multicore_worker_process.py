@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##
+##  multicore_worker_process.py
+##  AutoRoutePy
+##
+##  Created by Alan D. Snow 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
 import os
 import sys
 

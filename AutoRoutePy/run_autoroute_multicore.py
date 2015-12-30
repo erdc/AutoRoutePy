@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##
+##  run_autoroute_multicore.py
+##  AutoRoutePy
+##
+##  Created by Alan D. Snow 2015.
+##  Copyright © 2015 Alan D Snow. All rights reserved.
+##
 import multiprocessing
 import os
 
@@ -12,12 +19,12 @@ except ImportError:
           "mode, please install condorpy (i.e. pip install condorpy)."
     pass
 
-try:
-    from psutil import virtual_memory
-except ImportError:
-    print "psutil unable to be imported. If you would like to use multiprocessing", \
-          "mode, please install psutil (i.e. pip install psutil)."
-    pass
+##try:
+##    from psutil import virtual_memory
+##except ImportError:
+##    print "psutil unable to be imported. If you would like to use multiprocessing", \
+##          "mode, please install psutil (i.e. pip install psutil)."
+##    pass
 
 from datetime import datetime
 
