@@ -401,7 +401,7 @@ class AutoRoutePrepare(object):
         """
         print "Generating Streamflow Raster ..."
         #get list of streamidS
-        stream_info_table = self.csv_to_list(stream_info_file)[1:]
+        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
 
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
@@ -461,7 +461,7 @@ class AutoRoutePrepare(object):
         return_period_nc.close()
         
         #get where streamids are in the lookup grid id table
-        stream_info_table = self.csv_to_list(stream_info_file)[1:]
+        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
         print "Analyzing data and appending to list ..."
