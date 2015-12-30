@@ -148,16 +148,17 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
     if mode == "multiprocess":
         #set number of cpus to use (recommended 8 GB per cpu)
         total_cpus = multiprocessing.cpu_count()
-        mem = virtual_memory()
-        recommended_max_num_cpus = max(1, int(mem.total  * 1e-9 / 8))
+##        mem = virtual_memory()
+##        recommended_max_num_cpus = max(1, int(mem.total  * 1e-9 / 8))
         if num_cpus <= 0:
-            num_cpus = min(recommended_max_num_cpus, total_cpus)
+            num_cpus = total_cpus
+##            num_cpus = min(recommended_max_num_cpus, total_cpus)
         if num_cpus > total_cpus:
             num_cpus = total_cpus
             print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
-        if num_cpus > recommended_max_num_cpus:
-            print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
-                    recommended_max_num_cpus, "). This may cause memory issues ..."
+##        if num_cpus > recommended_max_num_cpus:
+##            print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
+##                    recommended_max_num_cpus, "). This may cause memory issues ..."
         #start pool
         pool = multiprocessing.Pool(num_cpus)
 
