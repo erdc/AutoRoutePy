@@ -36,7 +36,7 @@ arp = AutoRoutePrepare(autoroute_executable_location,
                        os.path.join(input_dir, 'elevation.dt2'),
                        '/path/to/DrainageLine.shp')
 ```
-Next, to connect the elevation DEM to to the stream network, you need to rasterize the
+Next, to connect the elevation DEM to the stream network, you need to rasterize the
 stream network based on the elevation DEM.
 ```python
 out_rasterized_streamfile = os.path.join(input_dir, 'rasterized_streamfile.tif')
@@ -52,5 +52,7 @@ arp.generate_stream_info_file_with_direction(out_rasterized_streamfile,
                                              stream_info_file,
                                              search_radius=1) #distance to search for stream direction in meters
 
-arp.append_slope_to_stream_info_file(os.path.join(local_dir,'stream_info.txt'),'HydroID' ,'Avg_Slope')
+arp.append_slope_to_stream_info_file(stream_info_file,
+                                     'HydroID',
+                                     'Avg_Slope')
 ```
