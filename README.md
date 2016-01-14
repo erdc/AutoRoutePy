@@ -53,6 +53,6 @@ arp.generate_stream_info_file_with_direction(out_rasterized_streamfile,
                                              search_radius=1) #distance to search for stream direction in meters
 
 arp.append_slope_to_stream_info_file(stream_info_file,
-                                     'HydroID',
-                                     'Avg_Slope')
+                                     'HydroID', #the attribute name of the stream ID used for RAPID
+                                     'Avg_Slope') #the attribute name of the stream slope
 ```
