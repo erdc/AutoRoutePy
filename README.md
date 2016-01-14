@@ -94,3 +94,26 @@ for direc in glob(main_folder):
 
     arp.append_slope_to_stream_info_file(stream_info_file, river_id, slope_id)
 ```
+
+##(Optional) Prepare Manning's N Raster
+Based on a land use raster and a land use table, you can generate a Manning’s N raster to use with AutoRoute.
+
+```python
+from AutoRoute.autoroute_prepare import AutoRoutePrepare
+import os
+
+autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
+input_dir = '/home/alan/work/autoroute-io/input/philippines-luzon/15'
+
+arp = AutoRoutePrepare(autoroute_executable_location,
+                       os.path.join(input_dir, 'elevation.dt2'))
+#Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
+arp.generate_manning_n_raster(land_use_raster='/path/to/land_use/AutoRAPID_LULC.tif'),
+                              input_manning_n_table='/path/to/Manning_N_Values/AR_Manning_n_for_NLCD_LOW.txt'),
+                              output_manning_n_raster=os.path.join(main_dir, 'manning_n.tif'),
+                              default_manning_n=0.035) #value for manning's n to be used in raster if no value found in table
+```
+
+
+
+
