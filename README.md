@@ -130,7 +130,7 @@ autoroute_output_path = '/home/alan/work/autoroute-io/output/philippines-luzon/1
 out_shapefile_name = os.path.join(autoroute_output_path, 'flood_map_shp.tif')
 
 auto_mng = AutoRoute(autoroute_executable_location,
-                     dem_raster_file_path=case_insensitive_file_search(autoroute_input_path, elevation\.tiff'),
+                     dem_raster_file_path=case_insensitive_file_search(autoroute_input_path, r'elevation\.tiff'),
                      stream_info_file_path=case_insensitive_file_search(autoroute_input_path, r'stream_info\.txt'),
                      out_flood_map_raster_path=os.path.join(autoroute_output_path, 'flood_map.tif')
                     )
@@ -192,7 +192,7 @@ autoroute_watershed_output_directory = '/home/alan/work/autoroute-io/output/phil
 condor_log_dir = '/home/alan/work/condor_logs'
 
 #run based on return period data
-rapid_output_file = '/home/alan/work/rapid-io/output/philippines-luzon/return_periods.nc'
+rapid_output_file = '/home/alan/work/rapid-io/output/philippines-luzon/Qout_lis_1980to2014.nc'
 run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
                         autoroute_input_directory=autoroute_watershed_directory_path, #path to AutoRoute input directory
                         autoroute_output_directory=master_watershed_autoroute_output_directory, #path to AutoRoute output directory
