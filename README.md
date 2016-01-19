@@ -9,7 +9,7 @@ python-based interface for AutoRoute
 ##Installation
 ```
 $ git clone https://github.com/erdc-cm/AutoRoute-py.git
-$ cd AutoRoute-py
+$ cd AutoRoutePy
 ```
 To install:
 ```
