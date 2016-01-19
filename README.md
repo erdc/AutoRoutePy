@@ -64,6 +64,21 @@ arp.append_slope_to_stream_info_file(stream_info_file,
 ###(Optional) Prepare Manning's N Raster
 Based on a land use raster and a land use table, you can generate a Manning’s N raster to use with AutoRoute.
 
+WARNING: The land use raster must be in the same projection as your elevation raster! 
+If it is not in the same projection, either reproject using a GIS tool or use this
+script.
+```
+from AutoRoute.reproject_raster import reproject_lu_raster
+
+dem_raster = '/autoroute-io/input/TuscaloosaCounty/n33w088/elevation.img'
+land_use_raster = '/autoroute_prepare/TuscaloosaCounty/NLCD2011_LC_N33W087.tif'
+reprojected_land_use_raster = '/autoroute_prepare/TuscaloosaCounty/NLCD2011_LC_N33W087_repr.tif'
+
+reproject_lu_raster(dem_raster, land_use_raster, reprojected_land_use_raster)
+```
+Once your land use raster is in the correct projection, use this process to generate the
+manning n raster.
+
 ```python
 from AutoRoute.autoroute_prepare import AutoRoutePrepare
 import os
@@ -113,7 +128,9 @@ for direc in glob(main_folder):
 
     arp.append_slope_to_stream_info_file(stream_info_file, river_id, slope_id)
 
-    """This section is optional, uncomment to use
+    """This section is optional, uncomment to use (WARNING: See "Prepare Manning's N Raster" section for
+    projection info)
+
     #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
     arp.generate_manning_n_raster(land_use_raster='/LandCover/NLCD2011_LC_N33W087_repr.tif',
                                   input_manning_n_table='/AutoRoute/manning_n_tables/AR_Manning_n_for_NLCD_LOW.txt',
