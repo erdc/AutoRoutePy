@@ -29,7 +29,7 @@ except ImportError:
 from datetime import datetime
 
 #local imports
-from imports.helper_functions import case_insensitive_file_search
+from helper_functions import case_insensitive_file_search
 from multicore_worker_process import run_AutoRoute
 
 #package imports
