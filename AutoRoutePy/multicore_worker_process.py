@@ -39,12 +39,20 @@ def run_AutoRoute(autoroute_executable_location,
             raise
         pass
 
-    #get the land use information
+    #get the manning n raster
     try:
         manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?!prj)')
     except Exception:
         manning_n_raster = ""
-        print "Manning n table not found. Ignoring this file ..."
+        print "Manning n raster not found. Ignoring this file ..."
+        pass
+
+    #autoroute input file
+    try:
+        autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.txt')
+    except Exception:
+        autoroute_input_file = ""
+        print "AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ..."
         pass
     
     auto_mng = AutoRoute(autoroute_executable_location,
@@ -56,7 +64,7 @@ def run_AutoRoute(autoroute_executable_location,
     if out_shapefile_name:             
         auto_mng.update_parameters(out_flood_map_shapefile_path=out_shapefile_name)
         
-    auto_mng.run_autoroute(autoroute_input_file=case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.txt'))
+    auto_mng.run_autoroute(autoroute_input_file)
 
     if delete_flood_raster:
         try:
