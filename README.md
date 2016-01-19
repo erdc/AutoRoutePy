@@ -1,4 +1,4 @@
-# AutoRoute-py
+# AutoRoutePy
 python-based interface for AutoRoute
 
 ##Prereqs
