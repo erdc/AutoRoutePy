@@ -11,11 +11,6 @@ from filecmp import cmp as fcmp
 from nose.tools import raises, ok_
 import os
 from shutil import copy
-
-
-#local import
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from AutoRoutePy.autoroute import AutoRoute
 
 @raises(Exception)

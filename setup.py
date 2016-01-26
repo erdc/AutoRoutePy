@@ -8,9 +8,9 @@ setup(
     keywords='AutoRoute',
     author='Alan Dee Snow',
     author_email='alan.d.snow@usace.army.mil',
-    url='https://github.com/erdc-cm/AutoRoute-py',
-    download_url='https://github.com/erdc-cm/AutoRoute-py/tarballs/0.0.1',
-    license='MIT',
+    url='https://github.com/erdc-cm/AutoRoutePy',
+    download_url='https://github.com/erdc-cm/AutoRoutePy/tarballs/0.0.1',
+    license='BSD-3 Clause',
     packages=['AutoRoutePy'],
     install_requires=['condorpy', 'psutil', 'gdal', 'netCDF4'],
 )

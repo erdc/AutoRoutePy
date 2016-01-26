@@ -13,10 +13,6 @@ import numpy.testing as npt
 import os
 from osgeo import gdal
 from shutil import copy
-
-#local import
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 
 def test_rasterize_stream_shapefle():
