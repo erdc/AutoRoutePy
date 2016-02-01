@@ -99,6 +99,8 @@ arp.generate_manning_n_raster(land_use_raster='/path/to/land_use/AutoRAPID_LULC.
 Here is an example for using multiprocessing to prepare input for AutoRoute. This requires each elevation DEM
 file to be inside of its own folder within the main watershed folder.
 
+WARNING: The land use raster must be in the same projection as your elevation raster! If it is not in the same projection, either reproject using a GIS tool or use this script.
+
 ```python
 from AutoRoutePy.autoroute_prepare_multiprocess import autoroute_prepare_multiprocess
 
