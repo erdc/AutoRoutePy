@@ -186,17 +186,15 @@ from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
 autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
 autoroute_watershed_input_directory = '/home/alan/work/autoroute-io/input/philippines-luzon'
 autoroute_watershed_output_directory = '/home/alan/work/autoroute-io/output/philippines-luzon' 
-condor_log_dir = '/home/alan/work/condor_logs'
 
 #run based on return period data
 return_period_file = '/home/alan/work/rapid-io/output/philippines-luzon/return_periods.nc'
 run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
-                        autoroute_input_directory=autoroute_watershed_directory_path, #path to AutoRoute input directory
-                        autoroute_output_directory=master_watershed_autoroute_output_directory, #path to AutoRoute output directory
+                        autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
+                        autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
                         return_period='return_period_20', # return period name in return period file
                         return_period_file=return_period_file, # return period file generated from RAPID historical run
                         mode="multiprocess", #multiprocess or htcondor
-                        condor_log_directory=condor_init_dir,
                         #delete_flood_raster=True, #delete flood raster generated (default is True)
                         #generate_floodmap_shapefile=True, #generate a flood map shapefile (default is True)
                         wait_for_all_processes_to_finish=True #this will wait for all processes to finish
@@ -204,7 +202,30 @@ run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute ex
 
 ```
 
-###Example 2: Using RAPID Qout file with HTCondor.
+###Example 2: Using pregenerated inputs with multiprocessing.
+In addition to highlighting the usage of return period data and multiprocessing, this example shows
+how you can use the defaults to generate the flood map shapefile and delete the flood map raster.
+
+```python
+from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
+
+autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
+autoroute_watershed_input_directory = '/home/alan/work/autoroute-io/input/philippines-luzon'
+autoroute_watershed_output_directory = '/home/alan/work/autoroute-io/output/philippines-luzon' 
+
+#run based on return period data
+run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
+                        autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
+                        autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
+                        mode="multiprocess", #multiprocess or htcondor
+                        delete_flood_raster=False, #delete flood raster generated (default is True)
+                        generate_floodmap_shapefile=False, #generate a flood map shapefile (default is True)
+                        wait_for_all_processes_to_finish=True #this will wait for all processes to finish
+                        )
+
+```
+
+###Example 3: Using RAPID Qout file with HTCondor.
 This example also demonstrates how to run AutoRoute without generating the floodmap shapefile and 
 only producing the flood map raster.
 
@@ -219,8 +240,8 @@ condor_log_dir = '/home/alan/work/condor_logs'
 #run based on return period data
 rapid_output_file = '/home/alan/work/rapid-io/output/philippines-luzon/Qout_lis_1980to2014.nc'
 run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
-                        autoroute_input_directory=autoroute_watershed_directory_path, #path to AutoRoute input directory
-                        autoroute_output_directory=master_watershed_autoroute_output_directory, #path to AutoRoute output directory
+                        autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
+                        autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
                         rapid_output_file=rapid_output_file, #RAPID Qout file from simulation
                         mode="htcondor", #multiprocess or htcondor
                         condor_log_directory=condor_init_dir,
