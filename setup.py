@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+##
+##  setup.py
+##  AutoRoutePy
+##
+##  Created by Alan D. Snow.
+##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
+##  License: BSD-3 Clause
+
 from setuptools import setup
 
 setup(
