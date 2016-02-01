@@ -27,7 +27,10 @@ def run_AutoRoute(autoroute_executable_location,
     """
     Run AutoRoute with searching for inputs in directory
     """
-        
+    #change working directory for python (this is for the input file produced to
+    # prevent overwriting)
+    os.chdir(autoroute_input_path)
+    
     #get the raster for elevation    
     try:
         elevation_raster = case_insensitive_file_search(autoroute_input_path, r'elevation\.(?!prj)')
