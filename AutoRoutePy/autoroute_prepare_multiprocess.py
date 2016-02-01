@@ -24,6 +24,7 @@ def autoroute_prepare_single_folder(sub_folder,
     and stream_network_shapefile and os.path.exists(stream_network_shapefile):
     
         print "Running AutoRoute prepare for folder:", sub_folder
+        os.chdir(sub_folder)
         
         out_rasterized_streamfile = os.path.join(sub_folder, 'rasterized_streamfile.tif')
         stream_info_file = os.path.join(sub_folder,'stream_info.txt')
@@ -125,7 +126,7 @@ if __name__ == "__main__":
                                    #manning_n_table="",
                                    #dem_extension='img',
                                    #river_id='COMID',
-                                   slope_id='elevslope',
+                                   #slope_id='elevslope_',
                                    #default_manning_n=0.035,
                                    )
 """
