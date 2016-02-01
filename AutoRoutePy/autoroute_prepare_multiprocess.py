@@ -116,7 +116,7 @@ def autoroute_prepare_multiprocess(watershed_folder,
     pool.close()
     pool.join()
 
-
+"""
 if __name__ == "__main__":
     autoroute_prepare_multiprocess(watershed_folder='/Users/rdchlads/autorapid/autoroute-io/input/upperchocta',
                                    autoroute_executable_location='/Users/rdchlads/scripts/AutoRoute/source_code/autoroute',
@@ -128,4 +128,4 @@ if __name__ == "__main__":
                                    slope_id='elevslope',
                                    #default_manning_n=0.035,
                                    )
-
+"""

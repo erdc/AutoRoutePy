@@ -96,47 +96,22 @@ arp.generate_manning_n_raster(land_use_raster='/path/to/land_use/AutoRAPID_LULC.
 ```
 
 ###Prepare multiple inputs programmatically
-Here is an example applying the principles above to programmatically loop
-through your folders and prepare all of you input. This requires each elevation DEM
-file to be inside of its own folder.
+Here is an example for using multiprocessing to prepare input for AutoRoute. This requires each elevation DEM
+file to be inside of its own folder within the main watershed folder.
 
 ```python
-from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
-from glob import glob
-import os
+from AutoRoutePy.autoroute_prepare_multiprocess import autoroute_prepare_multiprocess
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
-main_folder='/autoroute-io/input/TuscaloosaCounty/*'
-dem_extension = 'img'
-river_id = 'COMID'
-slope_id = 'sslope'
-stream_network_shapefile = '/gis_files/NHD_Flowlines_03W/NHDFlowLine_03W.shp'
-
-for direc in glob(main_folder):
-    local_dir = os.path.join(main_folder, direc)
-    
-    out_rasterized_streamfile = os.path.join(local_dir,'rasterized_streamfile.tif')
-    stream_info_file = os.path.join(local_dir,'stream_info.txt')
-    arp = AutoRoutePrepare(autoroute_executable_location,
-                           glob(os.path.join(local_dir, '*.{0}'.format(dem_extension)))[0],
-                           stream_network_shapefile)
-    arp.rasterize_stream_shapefile(out_rasterized_streamfile, river_id)
-
-    arp.generate_stream_info_file_with_direction(out_rasterized_streamfile,
-                                                 stream_info_file,
-                                                 search_radius=1)
-
-    arp.append_slope_to_stream_info_file(stream_info_file, river_id, slope_id)
-
-    """This section is optional, uncomment to use (WARNING: See "Prepare Manning's N Raster" section for
-    projection info)
-
-    #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
-    arp.generate_manning_n_raster(land_use_raster='/LandCover/NLCD2011_LC_N33W087_repr.tif',
-                                  input_manning_n_table='/AutoRoute/manning_n_tables/AR_Manning_n_for_NLCD_LOW.txt',
-                                  output_manning_n_raster=os.path.join(local_dir, 'manning_n.tif'),
-                                  default_manning_n=0.035)
-    """
+autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/upperchocta',
+                               autoroute_executable_location='/AutoRoute/source_code/autoroute',
+                               stream_network_shapefile='/gis_files/upperchocta/uc_flowlines_sl.shp',
+                               #land_use_raster="", #optional
+                               #manning_n_table="", #optional
+                               #dem_extension='img', #default is img
+                               #river_id='COMID', #default is COMID
+                               #slope_id='SLOPE', #default is SLOPE
+                               #default_manning_n=0.035, #default is 0.035
+                               )
 ```
 
 ##Running AutoRoute
