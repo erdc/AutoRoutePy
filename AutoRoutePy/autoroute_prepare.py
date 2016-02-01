@@ -236,12 +236,20 @@ class AutoRoutePrepare(object):
         Gets the subset reordered_streamid_list from the netcdf file
         """
         data_nc = NET.Dataset(prediction_file, mode="r")
-        com_ids = data_nc.variables['COMID'][:]
+        dims = data_nc.dimensions
+        id_dim_name = 'COMID'
+        if 'rivid' in dims:
+            id_dim_name = 'rivid'
+        com_ids = data_nc.variables[id_dim_name][:]
         data_nc.close()
         netcdf_reach_indices_list = []
         for reach_id in reach_id_list:
             #get where streamids are in netcdf file
-            netcdf_reach_indices_list.append(np.where(com_ids==reach_id)[0][0])
+            try:
+                netcdf_reach_indices_list.append(np.where(com_ids==reach_id)[0][0])
+            except IndexError:
+                print "ReachID", reach_id, "not found in netCDF dataset. Skipping ..."
+                pass
      
         return np.array(netcdf_reach_indices_list)                  
 
@@ -263,9 +271,10 @@ class AutoRoutePrepare(object):
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
-     
+        if not streamid_list_unique:
+            raise Exception("ERROR: No stream id values found in stream info file.")
+        
         #Get list of prediciton files
-     
         prediction_files = sorted([os.path.join(prediction_folder,f) for f in os.listdir(prediction_folder) \
                                   if not os.path.isdir(os.path.join(prediction_folder, f)) and f.lower().endswith('.nc')],
                                   reverse=True)
@@ -275,7 +284,11 @@ class AutoRoutePrepare(object):
         reordered_streamid_index_list = self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_unique, 
                                                                                                   prediction_files[0])
         data_nc = NET.Dataset(prediction_files[0], mode="r")
-        time_length = len(data_nc.variables['time'][:])
+        dims = data_nc.dimensions
+        id_dim_name = 'COMID'
+        if 'rivid' in dims:
+            id_dim_name = 'rivid'
+        time_length = len(data_nc.dimensions['time'])
         data_nc.close()
 
         first_half_size = 40
@@ -296,9 +309,9 @@ class AutoRoutePrepare(object):
                 #Get hydrograph data from ECMWF Ensemble
                 data_nc = NET.Dataset(prediction_file, mode="r")
                 qout_dimensions = data_nc.variables['Qout'].dimensions
-                if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
+                if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == id_dim_name.lower():
                     data_values_2d_array = data_nc.variables['Qout'][:, reordered_streamid_index_list].transpose()
-                elif qout_dimensions[0].lower() == 'comid' and qout_dimensions[1].lower() == 'time':
+                elif qout_dimensions[0].lower() == id_dim_name.lower() and qout_dimensions[1].lower() == 'time':
                     data_values_2d_array = data_nc.variables['Qout'][reordered_streamid_index_list, :]
                 else:
                     print "Invalid ECMWF forecast file", prediction_file
@@ -401,51 +414,88 @@ class AutoRoutePrepare(object):
 
     
     def append_streamflow_from_rapid_output(self, stream_info_file, 
-                                            rapid_output_file):
+                                            rapid_output_file,
+                                            date_peak_search_start=None,
+                                            date_peak_search_end=None):
         """
         Generate StreamFlow raster
         Create AutoRAPID INPUT from single RAPID output
         """
-        print "Generating Streamflow Raster ..."
-        #get list of streamidS
-        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
-        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
-
-        streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
-        streamid_list_unique = np.unique(streamid_list_full)
-
-        #Get list of prediciton files
-        print "Finding streamid indices ..."
-        reordered_streamid_index_list = self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_unique, 
-                                                                                                  rapid_output_file)
-
         print "Extracting Data ..."
         #get information from datasets
         data_nc = NET.Dataset(rapid_output_file, mode="r")
-        qout_dimensions = data_nc.variables['Qout'].dimensions
-        qout_2d_array = []
-        if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == 'comid':
-            qout_2d_array = data_nc.variables['Qout'][:,reordered_streamid_index_list].transpose()
-        elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == 'comid':
-            qout_2d_array = data_nc.variables['Qout'][reordered_streamid_index_list, :]
-        else:
-            data_nc.close()
-            raise Exception("Invalid RAPID qout file {}".format(rapid_output_file))
-            
-        data_nc.close()
+        dims = data_nc.dimensions
+        variables = data_nc.variables
+        id_dim_name = 'COMID'
+        if 'rivid' in dims:
+            id_dim_name = 'rivid'
+        river_ids = data_nc.variables[id_dim_name][:]
 
+        #get range of time to search for peaks
+        time_range = None
+        if 'time' in variables and (date_peak_search_start != None or date_peak_search_end != None):
+            time_array = data_nc.variables['time'][:]
+            if date_peak_search_start is not None:
+                seconds_start = (date_peak_search_start-datetime.datetime(1970,1,1)).total_seconds()
+                time_range = np.where(time_array>=seconds_start)[0]
+            
+            if date_peak_search_end is not None:
+                seconds_end = (date_peak_search_end-datetime.datetime(1970,1,1)).total_seconds()
+                if time_range is not None:
+                    time_range = np.intersect1d(time_range, np.where(time_array<=seconds_end)[0])
+                else:
+                    time_range = np.where(time_array<=seconds_end)[0]
+                        
+        qout_variable = data_nc.variables['Qout']
+        qout_dimensions = qout_variable.dimensions
+        print time_range
+        #get list of streamidS
+        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
+        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
+        streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
+        streamid_list_unique = np.unique(streamid_list_full)
+        
+        temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(stream_info_file)[0])
         print "Analyzing data and appending to list ..."
-        with open(stream_info_file, 'wb') as outfile:
+        with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            
             for streamid_index, streamid in enumerate(streamid_list_unique):
-                #get peak/max
-                peak_flow = np.amax(qout_2d_array[streamid_index])
+                try:
+                    #get where streamids are in netcdf file
+                    streamid_index = np.where(river_ids==streamid)[0][0]
+                    #get peak/max
+                    if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == id_dim_name.lower():
+                        if time_range is not None:
+                            peak_flow = np.amax(qout_variable[time_range,streamid_index])
+                        else:
+                            peak_flow = np.amax(qout_variable[:,streamid_index])
+                    elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == id_dim_name.lower():
+                        if time_range is not None:
+                            peak_flow = np.amax(qout_variable[streamid_index, time_range])
+                        else:
+                            peak_flow = np.amax(qout_variable[streamid_index, :])
+                    else:
+                        data_nc.close()
+                        raise Exception("Invalid RAPID qout file {}".format(rapid_output_file))
+                        
+                except IndexError:
+                    print "ReachID", streamid, "not found in netCDF dataset. Setting value to zero ..."
+                    peak_flow = 0
+                    pass
+
 
                 #get where streamids are in the lookup grid id table
                 raster_index_list = np.where(streamid_list_full==streamid)[0]
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
+
+         
+        os.remove(stream_info_file)
+        os.rename(temp_stream_info_file, stream_info_file)
+        data_nc.close()
+
 
     def append_streamflow_from_return_period_file(self, stream_info_file, 
                                                   return_period_file, 
@@ -480,14 +530,16 @@ class AutoRoutePrepare(object):
                 try:
                     #get where streamids are in netcdf file
                     streamid_index = np.where(return_period_comids==streamid)[0][0]
-                except Exception:
-                    print "streamid", streamid, "not found in list. Skipping ..."
-                    raise
+                    peak_flow = return_period_data[streamid_index]
+                except IndexError:
+                    print "ReachID", streamid, "not found in netCDF dataset. Setting value to zero ..."
+                    peak_flow = 0
+                    pass
                     
                 #get where streamids are in the lookup grid id table
                 raster_index_list = np.where(streamid_list_full==streamid)[0]
                 for raster_index in raster_index_list:
-                    writer.writerow(stream_info_table[raster_index][:6] + [return_period_data[streamid_index]])
+                    writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
 
             
 if __name__ == "__main__":
