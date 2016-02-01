@@ -63,6 +63,8 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                             return_period="", # return period name in return period file
                             return_period_file="", # return period file generated from RAPID historical run
                             rapid_output_file="", #path to RAPID output file to be used
+                            date_peak_search_start=None, #datetime of start of search for peakflow
+                            date_peak_search_end=None, #datetime of end of search for peakflow
                             condor_log_directory="", #path to HTCondor logs
                             mode="multiprocess", #multiprocess or htcondor 
                             delete_flood_raster=True, #delete flood raster generated
@@ -213,7 +215,9 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                                   return_period=return_period)
                 elif RUN_CASE == 3:
                     arp.append_streamflow_from_rapid_output(stream_info_file=stream_info_file,
-                                                            rapid_output_file=rapid_output_file)
+                                                            rapid_output_file=rapid_output_file,
+                                                            date_peak_search_start=date_peak_search_start,
+                                                            date_peak_search_end=date_peak_search_end)
                     
             
             output_shapefile_base_name = '%s_%s' % (autoroute_job_name, directory)
