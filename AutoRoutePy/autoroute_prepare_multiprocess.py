@@ -56,7 +56,7 @@ def autoroute_prepare_single_folder(sub_folder,
         and manning_n_table and os.path.exists(manning_n_table):
             arp.generate_manning_n_raster(land_use_raster,
                                           manning_n_table,
-                                          os.path.join(local_dir, 'manning_n.tif'),
+                                          os.path.join(sub_folder, 'manning_n.tif'),
                                           default_manning_n)
 
         try:
@@ -117,16 +117,14 @@ def autoroute_prepare_multiprocess(watershed_folder,
     pool.close()
     pool.join()
 
-"""
 if __name__ == "__main__":
-    autoroute_prepare_multiprocess(watershed_folder='/Users/rdchlads/autorapid/autoroute-io/input/upperchocta',
+    autoroute_prepare_multiprocess(watershed_folder='/Users/rdchlads/Desktop/AutoRoutePaperRun/ASCII_Files',
                                    autoroute_executable_location='/Users/rdchlads/scripts/AutoRoute/source_code/autoroute',
-                                   stream_network_shapefile='/Users/rdchlads/autorapid/gis_files/upperchocta/uc_flowlines_sl.shp',
-                                   #land_use_raster="",
-                                   #manning_n_table="",
-                                   #dem_extension='img',
-                                   #river_id='COMID',
-                                   #slope_id='elevslope_',
+                                   stream_network_shapefile='/Users/rdchlads/autorapid/gis_files/mississippi-nhdplus2/Mississippi_NHDPlusflowlinev2.shp',
+                                   land_use_raster="/Users/rdchlads/Desktop/AutoRoutePaperRun/land_cover/ar_lulc_clip.asc",
+                                   manning_n_table="/Users/rdchlads/Desktop/AutoRoutePaperRun/land_cover/AR_Manning_n_for_NLCD_LOW.txt",
+                                   dem_extension='asc',
+                                   river_id='COMID',
+                                   slope_id='SLOPE',
                                    #default_manning_n=0.035,
                                    )
-"""
