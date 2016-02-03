@@ -467,15 +467,26 @@ class AutoRoutePrepare(object):
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             
-            #perform operation in max chunk size of 10,000
+            #perform operation in max chunk size of 4,000
+            max_chunk_size = 8*365*5*4000 #5 years of 3hr data (8/day) with 4000 comids at a time
+            time_length = 8*365*5 #assume 5 years of 3hr data
+            if time_range:
+                time_length = len(time_range)
+            else:
+                if 'time' in dims:
+                    time_length = len(dims['time'])
+                else:
+                    time_length = len(dims['Time'])
+
             streamid_list_length = len(streamid_list_unique)
-            step_size = min(10000, streamid_list_length)
-            for list_index in xrange(0, streamid_list_length, step_size):
-                print "River ID subset range {0} to {1} of {2} ...".format(list_index,
-                                                                           list_index+step_size,
+            step_size = min(max(1, max_chunk_size/time_length), streamid_list_length)
+            for list_index_start in xrange(0, streamid_list_length, step_size):
+                list_index_end = min(list_index_start+step_size, streamid_list_length)
+                print "River ID subset range {0} to {1} of {2} ...".format(list_index_start,
+                                                                           list_index_end,
                                                                            streamid_list_length)
                 print "Getting subset of reach ids ..."
-                streamid_list_subset = streamid_list_unique[list_index:list_index+step_size]
+                streamid_list_subset = streamid_list_unique[list_index_start:list_index_end]
                 streamid_index_list_subset, valid_stream_ids, missing_stream_ids = \
                     self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_subset,
                                                                               rapid_output_file)
@@ -502,9 +513,9 @@ class AutoRoutePrepare(object):
                     for raster_index in raster_index_list:
                         writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
 
-                for streamid in missing_stream_ids:
+                for missing_streamid in missing_stream_ids:
                     #set flow to zero for missing stream ids
-                    raster_index_list = np.where(streamid_list_full==streamid)[0]
+                    raster_index_list = np.where(streamid_list_full==missing_streamid)[0]
                     for raster_index in raster_index_list:
                         writer.writerow(stream_info_table[raster_index][:6] + [0])
 
@@ -513,6 +524,7 @@ class AutoRoutePrepare(object):
         os.remove(stream_info_file)
         os.rename(temp_stream_info_file, stream_info_file)
         data_nc.close()
+        print "Appending streamflow complete for:", stream_info_file
 
 
     def append_streamflow_from_return_period_file(self, stream_info_file, 
