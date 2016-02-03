@@ -504,6 +504,7 @@ class AutoRoutePrepare(object):
 
                 for streamid in missing_stream_ids:
                     #set flow to zero for missing stream ids
+                    raster_index_list = np.where(streamid_list_full==streamid)[0]
                     for raster_index in raster_index_list:
                         writer.writerow(stream_info_table[raster_index][:6] + [0])
 
