@@ -52,14 +52,10 @@ def run_AutoRoute(autoroute_executable_location,
 
     #autoroute input file
     try:
-        autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTO_ROUTE_INPUT\.TXT')
+        autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.TXT')
     except Exception:
-        try:
-            autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT\.TXT')
-        except Exception:
-            autoroute_input_file = ""
-            print "AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ..."
-            raise
+        autoroute_input_file = ""
+        print "AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ..."
         pass
     
     auto_mng = AutoRoute(autoroute_executable_location,
