@@ -36,7 +36,7 @@ from multicore_worker_process import run_AutoRoute
 from autoroute_prepare import AutoRoutePrepare 
 
 #----------------------------------------------------------------------------------------
-# MULTIPROCESS FUNCTION
+# MULTIPROCESS FUNCTIONS
 #----------------------------------------------------------------------------------------
 def run_autoroute_multiprocess_worker(args):
     """
@@ -52,7 +52,58 @@ def run_autoroute_multiprocess_worker(args):
         print ex
         
     return args[2], args[3]
-                  
+
+def prepare_autoroute_streamflow_multiprocess(autoroute_executable_location,
+                                              RUN_CASE,
+                                              master_watershed_autoroute_input_directory,
+                                              elevation_raster,
+                                              stream_info_file,
+                                              rapid_output_directory,
+                                              return_period_file,
+                                              rapid_output_file,
+                                              date_peak_search_start,
+                                              date_peak_search_end
+                                              ):
+    """
+    This function uses multiprocessing to prepare streamflow inputs for AutoRoute
+    """
+    os.chdir(master_watershed_autoroute_input_directory)
+    #create input streamflow raster for AutoRoute
+    arp = AutoRoutePrepare(autoroute_executable_location,
+                           elevation_raster)
+    if RUN_CASE == 1:
+        arp.append_streamflow_from_ecmwf_rapid_output(stream_info_file=stream_info_file,
+                                                      prediction_folder=rapid_output_directory,
+                                                      method_x="mean_plus_std", method_y="max")
+    elif RUN_CASE == 2:
+        arp.append_streamflow_from_return_period_file(stream_info_file=stream_info_file,
+                                                      return_period_file=return_period_file,
+                                                      return_period=return_period)
+    elif RUN_CASE == 3:
+        arp.append_streamflow_from_rapid_output(stream_info_file=stream_info_file,
+                                                rapid_output_file=rapid_output_file,
+                                                date_peak_search_start=date_peak_search_start,
+                                                date_peak_search_end=date_peak_search_end)
+
+def prepare_autoroute_streamflow_multiprocess_worker(args):
+    """
+    Run autoroute on one of multiple cores
+    """
+    try:
+        prepare_autoroute_streamflow_multiprocess(args[0],
+                                                  args[1],
+                                                  args[2],
+                                                  args[3],
+                                                  args[4],
+                                                  args[5],
+                                                  args[6],
+                                                  args[7],
+                                                  args[8],
+                                                  args[9]
+                                                  )
+    except Exception as ex:
+        print ex
+        
 #----------------------------------------------------------------------------------------
 # MAIN PROCESS
 #----------------------------------------------------------------------------------------
@@ -152,73 +203,68 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                             'htcondor_job_info': [],
                             'output_folder': autoroute_output_directory,
                            }
-
-    pool = None
-    if mode == "multiprocess":
-        #set number of cpus to use (recommended 8 GB per cpu)
-        total_cpus = multiprocessing.cpu_count()
+    total_cpus = multiprocessing.cpu_count()
+##    if mode == "multiprocess":
+##        #set number of cpus to use (recommended 8 GB per cpu)
+##        total_cpus = multiprocessing.cpu_count()
 ##        mem = virtual_memory()
 ##        recommended_max_num_cpus = max(1, int(mem.total  * 1e-9 / 8))
-        if num_cpus <= 0:
-            num_cpus = total_cpus
+##        if num_cpus <= 0:
+##            num_cpus = total_cpus
 ##            num_cpus = min(recommended_max_num_cpus, total_cpus)
-        if num_cpus > total_cpus:
-            num_cpus = total_cpus
-            print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
+##        if num_cpus > total_cpus:
+##            num_cpus = total_cpus
+##            print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
 ##        if num_cpus > recommended_max_num_cpus:
 ##            print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
 ##                    recommended_max_num_cpus, "). This may cause memory issues ..."
-        #start pool
-        pool = multiprocessing.Pool(num_cpus)
-
+##        #start pool
+##        pool = multiprocessing.Pool(num_cpus)
+    pool_streamflow = multiprocessing.Pool(total_cpus)
+    pool_main = multiprocessing.Pool(total_cpus)
 
     #--------------------------------------------------------------------------
     #Run the model
     #--------------------------------------------------------------------------
     #loop through sub-directories
+    streamflow_job_list = []
     for directory in os.listdir(autoroute_input_directory):
         master_watershed_autoroute_input_directory = os.path.join(autoroute_input_directory, directory)
         if os.path.isdir(master_watershed_autoroute_input_directory):
             autoroute_job_name = os.path.basename(autoroute_input_directory)
-            print "Running AutoRoute for watershed:", autoroute_job_name, "sub directory:", directory
+            print "Adding AutoRoute jobs for watershed:", autoroute_job_name, \
+                  "sub directory:", directory
             
-            if RUN_CASE > 0:
-                #create input streamflow raster for AutoRoute
+            try:
+                elevation_raster = case_insensitive_file_search(master_watershed_autoroute_input_directory, r'elevation\.(?!prj)')
+            except Exception:
                 try:
-                    elevation_raster = case_insensitive_file_search(master_watershed_autoroute_input_directory, r'elevation\.(?!prj)')
+                    elevation_raster = case_insensitive_file_search(os.path.join(master_watershed_autoroute_input_directory, 'elevation'), r'hdr\.adf')
                 except Exception:
-                    try:
-                        elevation_raster = case_insensitive_file_search(os.path.join(master_watershed_autoroute_input_directory, 'elevation'), r'hdr\.adf')
-                    except Exception:
-                        print "Elevation raster not found. Skipping run ..."
-                        continue
-                        pass
-                    pass
-                
-                try:
-                    stream_info_file = case_insensitive_file_search(master_watershed_autoroute_input_directory,
-                                                                    r'stream_info\.txt')
-                except Exception:
-                    print "Stream info file not found. Skipping run ..."
+                    print "Elevation raster not found. Skipping run ..."
                     continue
                     pass
-                
-                arp = AutoRoutePrepare(autoroute_executable_location,
-                                       elevation_raster)
-                if RUN_CASE == 1:
-                    arp.append_streamflow_from_ecmwf_rapid_output(stream_info_file=stream_info_file,
-                                                                  prediction_folder=rapid_output_directory,
-                                                                  method_x="mean_plus_std", method_y="max")
-                elif RUN_CASE == 2:
-                    arp.append_streamflow_from_return_period_file(stream_info_file=stream_info_file,
-                                                                  return_period_file=return_period_file,
-                                                                  return_period=return_period)
-                elif RUN_CASE == 3:
-                    arp.append_streamflow_from_rapid_output(stream_info_file=stream_info_file,
-                                                            rapid_output_file=rapid_output_file,
-                                                            date_peak_search_start=date_peak_search_start,
-                                                            date_peak_search_end=date_peak_search_end)
-                    
+                pass
+            
+            try:
+                stream_info_file = case_insensitive_file_search(master_watershed_autoroute_input_directory,
+                                                                r'stream_info\.txt')
+            except Exception:
+                print "Stream info file not found. Skipping run ..."
+                continue
+                pass
+
+            if RUN_CASE > 0:
+                streamflow_job_list.append((autoroute_executable_location,
+                                            RUN_CASE,
+                                            master_watershed_autoroute_input_directory,
+                                            elevation_raster,
+                                            stream_info_file,
+                                            rapid_output_directory,
+                                            return_period_file,
+                                            rapid_output_file,
+                                            date_peak_search_start,
+                                            date_peak_search_end))
             
             output_shapefile_base_name = '%s_%s' % (autoroute_job_name, directory)
             #set up flood raster name
@@ -267,7 +313,6 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                          output_flood_raster_name,
                                                          output_shapefile_shp_name,
                                                          delete_flood_raster))
-                job.submit()
                 autoroute_job_info['htcondor_job_list'].append(job)
                 autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
 
@@ -289,20 +334,31 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                                   master_output_shapefile_shp_name,
                                                   delete_flood_raster))
                 """
+    if RUN_CASE > 0:
+        #generate streamflow
+        pool_streamflow.imap_unordered(prepare_autoroute_streamflow_multiprocess_worker,
+                                       streamflow_job_list,
+                                       chunksize=1)
+        pool_streamflow.close()
+        pool_streamflow.join()
     
+    #submit jobs to run
     if mode == "multiprocess":
-        autoroute_job_info['multiprocess_worker_list'] = pool.imap_unordered(run_autoroute_multiprocess_worker, 
-                                                                             autoroute_job_info['multiprocess_job_list'], 
-                                                                             chunksize=1)
-            
+        autoroute_job_info['multiprocess_worker_list'] = pool_main.imap_unordered(run_autoroute_multiprocess_worker, 
+                                                                                 autoroute_job_info['multiprocess_job_list'], 
+                                                                                 chunksize=1)
+    else:
+        for htcondor_job in autoroute_job_info['htcondor_job_list']:
+            htcondor_job.submit()
+
     if wait_for_all_processes_to_finish:
         #wait for all of the jobs to complete
         if mode == "multiprocess":
             for multi_job_output in autoroute_job_info['multiprocess_worker_list']:
                 print "READY:", multi_job_output[1]
             #just in case ...
-            pool.close()
-            pool.join()
+            pool_main.close()
+            pool_main.join()
         else:
             for htcondor_job_index, htcondor_job in enumerate(autoroute_job_info['htcondor_job_list']):
                 htcondor_job.wait()

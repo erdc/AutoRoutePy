@@ -8,10 +8,11 @@
 ##
 import csv
 import datetime
-import netCDF4 as NET
+from netCDF4 import Dataset
 import numpy as np
 import os
 from osgeo import gdal, ogr, osr
+from RAPIDpy.dataset import RAPIDDataset
 from subprocess import Popen, PIPE
 
 #------------------------------------------------------------------------------
@@ -231,35 +232,7 @@ class AutoRoutePrepare(object):
                     writer.writerow(stream_info_table[raster_index][:5] + [slope] + stream_info_table[raster_index][6:])
 
 
-    def get_reordered_subset_streamid_index_list_from_netcdf(self, reach_id_list, prediction_file):
-        """
-        Gets the subset reordered_streamid_list from the netcdf file
-        """
-        data_nc = NET.Dataset(prediction_file, mode="r")
-        dims = data_nc.dimensions
-        id_dim_name = 'COMID'
-        if 'rivid' in dims:
-            id_dim_name = 'rivid'
-        com_ids = data_nc.variables[id_dim_name][:]
-        data_nc.close()
-        netcdf_reach_indices_list = []
-        valid_reach_ids = []
-        missing_reach_ids = []
-        for reach_id in reach_id_list:
-            #get where streamids are in netcdf file
-            try:
-                netcdf_reach_indices_list.append(np.where(com_ids==reach_id)[0][0])
-                valid_reach_ids.append(reach_id)
-            except IndexError:
-                print "ReachID", reach_id, "not found in netCDF dataset. Skipping ..."
-                missing_reach_ids.append(reach_id)
-                pass
-        np_valid_reach_indices_list = np.array(netcdf_reach_indices_list)
-        np_valid_reach_ids = np.array(valid_reach_ids)
-        sorted_indexes = np.argsort(np_valid_reach_indices_list)
-        return np_valid_reach_indices_list[sorted_indexes], np_valid_reach_ids[sorted_indexes], np.array(missing_reach_ids)
-
-    def append_streamflow_from_ecmwf_rapid_output(self, stream_info_file, 
+    def append_streamflow_from_ecmwf_rapid_output(self, stream_info_file,
                                                   prediction_folder,
                                                   method_x, method_y):
         """
@@ -287,15 +260,8 @@ class AutoRoutePrepare(object):
      
      
         print "Finding streamid indices ..."
-        reordered_streamid_index_list = self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_unique, 
-                                                                                                  prediction_files[0])
-        data_nc = NET.Dataset(prediction_files[0], mode="r")
-        dims = data_nc.dimensions
-        id_dim_name = 'COMID'
-        if 'rivid' in dims:
-            id_dim_name = 'rivid'
-        time_length = len(data_nc.dimensions['time'])
-        data_nc.close()
+        with RAPIDDataset(prediction_files[0]) as data_nc:
+            reordered_streamid_index_list = data_nc.get_subset_riverid_index_list(streamid_list_unique)
 
         first_half_size = 40
         if time_length == 41 or time_length == 61:
@@ -313,15 +279,8 @@ class AutoRoutePrepare(object):
             try:
                 ensemble_index = int(os.path.basename(prediction_file)[:-3].split("_")[-1])
                 #Get hydrograph data from ECMWF Ensemble
-                data_nc = NET.Dataset(prediction_file, mode="r")
-                qout_dimensions = data_nc.variables['Qout'].dimensions
-                if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == id_dim_name.lower():
-                    data_values_2d_array = data_nc.variables['Qout'][:, reordered_streamid_index_list].transpose()
-                elif qout_dimensions[0].lower() == id_dim_name.lower() and qout_dimensions[1].lower() == 'time':
-                    data_values_2d_array = data_nc.variables['Qout'][reordered_streamid_index_list, :]
-                else:
-                    print "Invalid ECMWF forecast file", prediction_file
-                    data_nc.close()
+                with RAPIDDataset(prediction_file) as data_nc:
+                    data_values_2d_array = data_nc.get_qout_index(reordered_streamid_index_list)
     
             except Exception, e:
                 print e
@@ -429,32 +388,6 @@ class AutoRoutePrepare(object):
         """
         print "Appending streamflow for:", stream_info_file
         #get information from datasets
-        data_nc = NET.Dataset(rapid_output_file, mode="r")
-        dims = data_nc.dimensions
-        variables = data_nc.variables
-        id_dim_name = 'COMID'
-        if 'rivid' in dims:
-            id_dim_name = 'rivid'
-        river_ids = data_nc.variables[id_dim_name][:]
-
-        #get range of time to search for peaks
-        time_range = None
-        if 'time' in variables and (date_peak_search_start != None or date_peak_search_end != None):
-            print "Determining time range ({0} to {1})...".format(date_peak_search_start, date_peak_search_end)
-            time_array = data_nc.variables['time'][:]
-            if date_peak_search_start is not None:
-                seconds_start = (date_peak_search_start-datetime.datetime(1970,1,1)).total_seconds()
-                time_range = np.where(time_array>=seconds_start)[0]
-            
-            if date_peak_search_end is not None:
-                seconds_end = (date_peak_search_end-datetime.datetime(1970,1,1)).total_seconds()
-                if time_range is not None:
-                    time_range = np.intersect1d(time_range, np.where(time_array<=seconds_end)[0])
-                else:
-                    time_range = np.where(time_array<=seconds_end)[0]
-                        
-        qout_variable = data_nc.variables['Qout']
-        qout_dimensions = qout_variable.dimensions
         #get list of streamids
         stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
@@ -467,63 +400,50 @@ class AutoRoutePrepare(object):
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             
-            #perform operation in max chunk size of 4,000
-            max_chunk_size = 8*365*5*4000 #5 years of 3hr data (8/day) with 4000 comids at a time
-            time_length = 8*365*5 #assume 5 years of 3hr data
-            if time_range:
-                time_length = len(time_range)
-            else:
-                if 'time' in dims:
-                    time_length = len(dims['time'])
-                else:
-                    time_length = len(dims['Time'])
-
-            streamid_list_length = len(streamid_list_unique)
-            step_size = min(max(1, max_chunk_size/time_length), streamid_list_length)
-            for list_index_start in xrange(0, streamid_list_length, step_size):
-                list_index_end = min(list_index_start+step_size, streamid_list_length)
-                print "River ID subset range {0} to {1} of {2} ...".format(list_index_start,
-                                                                           list_index_end,
-                                                                           streamid_list_length)
-                print "Getting subset of reach ids ..."
-                streamid_list_subset = streamid_list_unique[list_index_start:list_index_end]
-                streamid_index_list_subset, valid_stream_ids, missing_stream_ids = \
-                    self.get_reordered_subset_streamid_index_list_from_netcdf(streamid_list_subset,
-                                                                              rapid_output_file)
-                print "Extracting data ..."
-                if qout_dimensions[0].lower() == 'time' and qout_dimensions[1].lower() == id_dim_name.lower():
-                    if time_range is not None:
-                        streamflow_array = qout_variable[time_range,streamid_index_list_subset].transpose()
-                    else:
-                        streamflow_array = qout_variable[:,streamid_index_list_subset].transpose()
-                elif qout_dimensions[1].lower() == 'time' and qout_dimensions[0].lower() == id_dim_name.lower():
-                    if time_range is not None:
-                        streamflow_array = qout_variable[streamid_index_list_subset, time_range]
-                    else:
-                        streamflow_array = qout_variable[streamid_index_list_subset, :]
-                else:
-                    data_nc.close()
-                    raise Exception("Invalid RAPID qout file {}".format(rapid_output_file))
+            with RAPIDDataset(rapid_output_file) as data_nc:
                 
-                print "Calculating peakflow and writing to file ..."
-                for streamid_index, streamid in enumerate(valid_stream_ids):
-                    #get where streamids are in the lookup grid id table
-                    peak_flow = max(streamflow_array[streamid_index])
-                    raster_index_list = np.where(streamid_list_full==streamid)[0]
-                    for raster_index in raster_index_list:
-                        writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
+                time_range = data_nc.get_time_index_range(date_peak_search_start=date_peak_search_start,
+                                                          date_peak_search_end=date_peak_search_end)
+                #perform operation in max chunk size of 4,000
+                max_chunk_size = 8*365*5*4000 #5 years of 3hr data (8/day) with 4000 comids at a time
+                time_length = 8*365*5 #assume 5 years of 3hr data
+                if time_range:
+                    time_length = len(time_range)
+                else:
+                    time_length = data_nc.size_time
 
-                for missing_streamid in missing_stream_ids:
-                    #set flow to zero for missing stream ids
-                    raster_index_list = np.where(streamid_list_full==missing_streamid)[0]
-                    for raster_index in raster_index_list:
-                        writer.writerow(stream_info_table[raster_index][:6] + [0])
+                streamid_list_length = len(streamid_list_unique)
+                step_size = min(max(1, max_chunk_size/time_length), streamid_list_length)
+                for list_index_start in xrange(0, streamid_list_length, step_size):
+                    list_index_end = min(list_index_start+step_size, streamid_list_length)
+                    print "River ID subset range {0} to {1} of {2} ...".format(list_index_start,
+                                                                               list_index_end,
+                                                                               streamid_list_length)
+                    print "Extracting data ..."
+                    streamid_list_subset = streamid_list_unique[list_index_start:list_index_end]
+                    data_nc.get_qout(streamid_list_subset,
+                                     date_peak_search_start,
+                                     date_peak_search_end)
+                    
+                    print "Calculating peakflow and writing to file ..."
+                    for streamid_index, streamid in enumerate(valid_stream_ids):
+                        #get where streamids are in the lookup grid id table
+                        peak_flow = max(streamflow_array[streamid_index])
+                        raster_index_list = np.where(streamid_list_full==streamid)[0]
+                        for raster_index in raster_index_list:
+                            writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
+
+                    for missing_streamid in missing_stream_ids:
+                        #set flow to zero for missing stream ids
+                        raster_index_list = np.where(streamid_list_full==missing_streamid)[0]
+                        for raster_index in raster_index_list:
+                            writer.writerow(stream_info_table[raster_index][:6] + [0])
 
 
          
         os.remove(stream_info_file)
         os.rename(temp_stream_info_file, stream_info_file)
-        data_nc.close()
+
         print "Appending streamflow complete for:", stream_info_file
 
 
@@ -534,7 +454,7 @@ class AutoRoutePrepare(object):
         Generates return period raster from return period file
         """
         print "Extracting Return Period Data ..."
-        return_period_nc = NET.Dataset(return_period_file, mode="r")
+        return_period_nc = Dataset(return_period_file, mode="r")
         if return_period == "return_period_20": 
             return_period_data = return_period_nc.variables['return_period_20'][:]
         elif return_period == "return_period_10": 
@@ -570,52 +490,3 @@ class AutoRoutePrepare(object):
                 raster_index_list = np.where(streamid_list_full==streamid)[0]
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
-
-            
-if __name__ == "__main__":
-    #autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
-    #-------------------------------------------------------------------------
-    #PREPARE MULTIPLE INPUT EXAMPLE
-    #-------------------------------------------------------------------------
-    """
-    from glob import glob
-    main_folder='/home/alan/work/autoroute-io/input/philippines-luzon/*'
-    for direc in glob(main_folder):
-        local_dir = os.path.join(main_folder, direc)
-        arp = AutoRoutePrepare(autoroute_executable_location,
-                               glob(os.path.join(local_dir, '*.dt2'))[0],
-                              '/media/alan/Seagate Backup Plus Drive/AutoRAPID/gis_files/phillipines-luzon/DrainageLine.shp')
-        arp.rasterize_stream_shapefile(os.path.join(main_folder, direc, 'rasterized_streamfile.tif'),
-                                      'HydroID')
-        arp.generate_stream_info_file_with_direction(os.path.join(local_dir,'rasterized_streamfile.tif'),
-                                                     os.path.join(local_dir,'stream_info.txt'),
-                                                     search_radius=1)
-        
-        arp.append_slope_to_stream_info_file(os.path.join(local_dir,'stream_info.txt'),'HydroID' ,'Avg_Slope')
-    """
-    #-------------------------------------------------------------------------
-    #RUN SINGLE EXAMPLE
-    #-------------------------------------------------------------------------
-    """
-    main_dir = '/Users/rdchlads/scripts/AutoRoute-py/tests/original'
-    arp = AutoRoutePrepare(autoroute_executable_location,
-                           os.path.join(main_dir, 'elevation.asc'),
-                           os.path.join(main_dir, 'drainage_line.shp'))
-                           
-    arp.rasterize_stream_shapefile(os.path.join(main_dir,'rasterized_streamfile.tif'),
-                                   'COMID')
-    #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
-    arp.generate_manning_n_raster(land_use_raster=os.path.join(main_dir, 'LandCover', 'AutoRAPID_LULC.tif'),
-                                  input_manning_n_table=os.path.join(main_dir, 'Manning_N_Values', 'AR_Manning_n_for_NLCD_LOW.txt'),
-                                  output_manning_n_raster=os.path.join(main_dir, 'manning_n.tif'),
-                                  default_manning_n=0.035)
-    #Method to generate streamid_rasterindex file with new AutoRoute
-    arp.generate_stream_info_file_with_direction(os.path.join(main_dir,'rasterized_streamfile.tif'),
-                                                 os.path.join(main_dir,'stream_info.txt'),
-                                                 search_radius=1)
-
-    arp.append_slope_to_stream_info_file(os.path.join(main_dir,'stream_info.txt'))
-    
-    rapid_input_file =  '/home/alan/work/rapid-io/output/korean_peninsula-korea/20151109.0/Qout_korean_peninsula_korea_1.nc'
-    arp.append_streamflow_from_rapid_output(os.path.join(main_dir,'stream_info.txt'),
-    """
