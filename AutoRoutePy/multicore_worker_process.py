@@ -52,7 +52,7 @@ def run_AutoRoute(autoroute_executable_location,
 
     #autoroute input file
     try:
-        autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.txt')
+        autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.TXT')
     except Exception:
         autoroute_input_file = ""
         print "AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ..."
@@ -62,6 +62,7 @@ def run_AutoRoute(autoroute_executable_location,
                          dem_raster_file_path=elevation_raster,
                          stream_info_file_path=case_insensitive_file_search(autoroute_input_path, r'stream_info\.txt'),
                          out_flood_map_raster_path=out_flood_raster_name,
+                         manning_n_raster_file_path=manning_n_raster
                          )
                          
     if out_shapefile_name:             

@@ -61,7 +61,7 @@ class AutoRoute(object):
     
     def generate_input_file(self, file_path):
         """
-        Generate AUTO_ROUTE_INPUT.txt file
+        Generate AUTOROUTE_INPUT_FILE.txt file
         """
         print "Generating AutoRoute input file ..."
         try:
@@ -116,7 +116,7 @@ class AutoRoute(object):
         if not autoroute_input_file or not os.path.exists(autoroute_input_file):
             #generate input file if it does not exist
             if not autoroute_input_file:
-                autoroute_input_file = "AUTO_ROUTE_INPUT.txt"
+                autoroute_input_file = "AUTOROUTE_INPUT_FILE.txt"
             self.generate_input_file(autoroute_input_file)
         else:
             #update existing file
