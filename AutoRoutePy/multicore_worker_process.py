@@ -58,17 +58,19 @@ def run_AutoRoute(autoroute_executable_location,
         print "AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ..."
         pass
     
-    auto_mng = AutoRoute(autoroute_executable_location,
-                         dem_raster_file_path=elevation_raster,
-                         stream_info_file_path=case_insensitive_file_search(autoroute_input_path, r'stream_info\.txt'),
-                         out_flood_map_raster_path=out_flood_raster_name,
-                         manning_n_raster_file_path=manning_n_raster
-                         )
-                         
-    if out_shapefile_name:             
-        auto_mng.update_parameters(out_flood_map_shapefile_path=out_shapefile_name)
+    auto_mng = AutoRoute(autoroute_executable_location)
+
+    if autoroute_input_file:
+        auto_mng.update_input_file(autoroute_input_file)
         
-    auto_mng.run_autoroute(autoroute_input_file)
+    auto_mng.update_parameters(dem_raster_file_path=elevation_raster,
+                               stream_info_file_path=case_insensitive_file_search(autoroute_input_path, r'stream_info\.txt'),
+                               out_flood_map_raster_path=out_flood_raster_name,
+                               out_flood_map_shapefile_path=out_shapefile_name,
+                               manning_n_raster_file_path=manning_n_raster
+                               )
+                         
+    auto_mng.run_autoroute()
 
     if delete_flood_raster:
         try:
