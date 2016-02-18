@@ -263,12 +263,12 @@ class AutoRoutePrepare(object):
         with RAPIDDataset(prediction_files[0]) as data_nc:
             reordered_streamid_index_list = data_nc.get_subset_riverid_index_list(streamid_list_unique)
 
-        first_half_size = 40
-        if time_length == 41 or time_length == 61:
-            first_half_size = 41
-        elif time_length == 85 or time_length == 125:
-            #run at full resolution for all
-            first_half_size = 65
+            first_half_size = 40
+            if data_nc.size_time == 41 or data_nc.size_time == 61:
+                first_half_size = 41
+            elif data_nc.size_time == 85 or data_nc.size_time == 125:
+                #run at full resolution for all
+                first_half_size = 65
         
         print "Extracting Data ..."
         reach_prediciton_array_first_half = np.zeros((len(streamid_list_unique),len(prediction_files),first_half_size))
@@ -282,34 +282,35 @@ class AutoRoutePrepare(object):
                 with RAPIDDataset(prediction_file) as data_nc:
                     data_values_2d_array = data_nc.get_qout_index(reordered_streamid_index_list)
     
-            except Exception, e:
+                #add data to main arrays and order in order of interim comids
+                if len(data_values_2d_array) > 0:
+                    for comid_index in range(len(streamid_list_unique)):
+                        if(ensemble_index < 52):
+                            reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:first_half_size]
+                            reach_prediciton_array_second_half[comid_index][file_index] = data_values_2d_array[comid_index][first_half_size:]
+                        if(ensemble_index == 52):
+                            if first_half_size == 65:
+                                #convert to 3hr-6hr
+                                streamflow_1hr = data_values_2d_array[comid_index][:90:3]
+                                # get the time series of 3 hr/6 hr data
+                                streamflow_3hr_6hr = data_values_2d_array[comid_index][90:]
+                                # concatenate all time series
+                                reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr_6hr])
+                            elif data_nc.size_time == 125:
+                                #convert to 6hr
+                                streamflow_1hr = data_values_2d_array[comid_index][:90:6]
+                                # calculate time series of 6 hr data from 3 hr data
+                                streamflow_3hr = data_values_2d_array[comid_index][90:109:2]
+                                # get the time series of 6 hr data
+                                streamflow_6hr = data_values_2d_array[comid_index][109:]
+                                # concatenate all time series
+                                reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr])
+                            else:
+                                reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:]
+                                
+            except Exception as e:
                 print e
                 #pass
-            #add data to main arrays and order in order of interim comids
-            if len(data_values_2d_array) > 0:
-                for comid_index in range(len(streamid_list_unique)):
-                    if(ensemble_index < 52):
-                        reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:first_half_size]
-                        reach_prediciton_array_second_half[comid_index][file_index] = data_values_2d_array[comid_index][first_half_size:]
-                    if(ensemble_index == 52):
-                        if first_half_size == 65:
-                            #convert to 3hr-6hr
-                            streamflow_1hr = data_values_2d_array[comid_index][:90:3]
-                            # get the time series of 3 hr/6 hr data
-                            streamflow_3hr_6hr = data_values_2d_array[comid_index][90:]
-                            # concatenate all time series
-                            reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr_6hr])
-                        elif time_length == 125:
-                            #convert to 6hr
-                            streamflow_1hr = data_values_2d_array[comid_index][:90:6]
-                            # calculate time series of 6 hr data from 3 hr data
-                            streamflow_3hr = data_values_2d_array[comid_index][90:109:2]
-                            # get the time series of 6 hr data
-                            streamflow_6hr = data_values_2d_array[comid_index][109:]
-                            # concatenate all time series
-                            reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr])
-                        else:
-                            reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:]
      
         print "Analyzing data and writing output ..."
         with open(stream_info_file, 'wb') as outfile:
@@ -420,10 +421,12 @@ class AutoRoutePrepare(object):
                                                                                list_index_end,
                                                                                streamid_list_length)
                     print "Extracting data ..."
-                    streamid_list_subset = streamid_list_unique[list_index_start:list_index_end]
-                    data_nc.get_qout(streamid_list_subset,
-                                     date_peak_search_start,
-                                     date_peak_search_end)
+                    valid_stream_indices, valid_stream_ids, missing_stream_ids = \
+                        data_nc.get_subset_riverid_index_list(streamid_list_unique[list_index_start:list_index_end])
+                        
+                    streamflow_array = data_nc.get_qout_index(valid_stream_indices,
+                                                              date_peak_search_start,
+                                                              date_peak_search_end)
                     
                     print "Calculating peakflow and writing to file ..."
                     for streamid_index, streamid in enumerate(valid_stream_ids):
@@ -463,8 +466,10 @@ class AutoRoutePrepare(object):
             return_period_data = return_period_nc.variables['return_period_2'][:]
         else:
             raise Exception("Invalid return period definition.")
-
-        return_period_comids = return_period_nc.variables['COMID'][:]
+        rivid_var = 'COMID'
+        if 'rivid' in return_period_nc.variables:
+            rivid_var = 'rivid'
+        return_period_comids = return_period_nc.variables[rivid_var][:]
         return_period_nc.close()
         
         #get where streamids are in the lookup grid id table
