@@ -19,12 +19,12 @@ except ImportError:
           "mode, please install condorpy (i.e. pip install condorpy)."
     pass
 
-##try:
-##    from psutil import virtual_memory
-##except ImportError:
-##    print "psutil unable to be imported. If you would like to use multiprocessing", \
-##          "mode, please install psutil (i.e. pip install psutil)."
-##    pass
+try:
+    from psutil import virtual_memory
+except ImportError:
+    print "psutil unable to be imported. If you would like to use multiprocessing", \
+          "mode, please install psutil (i.e. pip install psutil)."
+    pass
 
 from datetime import datetime
 
@@ -203,25 +203,24 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                             'htcondor_job_info': [],
                             'output_folder': autoroute_output_directory,
                            }
-    total_cpus = multiprocessing.cpu_count()
-##    if mode == "multiprocess":
-##        #set number of cpus to use (recommended 8 GB per cpu)
-##        total_cpus = multiprocessing.cpu_count()
-##        mem = virtual_memory()
-##        recommended_max_num_cpus = max(1, int(mem.total  * 1e-9 / 8))
-##        if num_cpus <= 0:
-##            num_cpus = total_cpus
-##            num_cpus = min(recommended_max_num_cpus, total_cpus)
-##        if num_cpus > total_cpus:
-##            num_cpus = total_cpus
-##            print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
-##        if num_cpus > recommended_max_num_cpus:
-##            print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
-##                    recommended_max_num_cpus, "). This may cause memory issues ..."
-##        #start pool
-##        pool = multiprocessing.Pool(num_cpus)
-    pool_streamflow = multiprocessing.Pool(total_cpus)
-    pool_main = multiprocessing.Pool(total_cpus)
+    if mode == "multiprocess":
+        #set number of cpus to use (recommended 3 GB per cpu)
+        total_cpus = multiprocessing.cpu_count()
+        mem = virtual_memory()
+        recommended_max_num_cpus = max(1, int(mem.total  * 1e-9 / 3))
+        if num_cpus <= 0:
+            num_cpus = total_cpus
+            num_cpus = min(recommended_max_num_cpus, total_cpus)
+        if num_cpus > total_cpus:
+            num_cpus = total_cpus
+            print "Number of cores entered is greater then available cpus. Using all avalable cpus ..."
+        if num_cpus > recommended_max_num_cpus:
+            print "WARNING: Number of cpus allotted (", num_cpus , ") exceeds maximum recommended (", \
+                    recommended_max_num_cpus, "). This may cause memory issues ..."
+    print "num_cpus", num_cpus
+    #start pool
+    pool_streamflow = multiprocessing.Pool(num_cpus)
+    pool_main = multiprocessing.Pool(num_cpus)
 
     #--------------------------------------------------------------------------
     #Run the model
