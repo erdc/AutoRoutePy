@@ -32,9 +32,11 @@ import os
 
 autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
 input_dir = '/home/alan/work/autoroute-io/input/philippines-luzon/15'
+stream_info_file = os.path.join(input_dir,'stream_info.txt')
 
 arp = AutoRoutePrepare(autoroute_executable_location,
                        os.path.join(input_dir, 'elevation.dt2'),
+		       stream_info_file,
                        '/path/to/DrainageLine.shp')
 ```
 
@@ -51,14 +53,10 @@ arp.rasterize_stream_shapefile(out_rasterized_streamfile,
 Then, create your stream info file and add stream direction and slope to it.
 
 ```python
-stream_info_file = os.path.join(input_dir,'stream_info.txt')
-
 arp.generate_stream_info_file_with_direction(out_rasterized_streamfile,
-                                             stream_info_file,
                                              search_radius=1) #distance to search for stream direction in meters
 
-arp.append_slope_to_stream_info_file(stream_info_file,
-                                     'HydroID', #the attribute name of the stream ID used for RAPID
+arp.append_slope_to_stream_info_file('HydroID', #the attribute name of the stream ID used for RAPID
                                      'Avg_Slope') #the attribute name of the stream slope
 ```
 

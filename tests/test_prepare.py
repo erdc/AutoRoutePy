@@ -15,7 +15,7 @@ from osgeo import gdal
 from shutil import copy
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 
-def test_rasterize_stream_shapefle():
+def test_rasterize_stream_shapefile():
     """
     Checks AutoRoute input file generation with invalid input
     """
@@ -27,6 +27,7 @@ def test_rasterize_stream_shapefle():
     print "TEST 1: RASTERIZE STREAM SHAPEFILE"
     arp = AutoRoutePrepare("autoroute_exe_path_dummy",
                            os.path.join(original_data_path, 'elevation.asc'),
+                           "dummy_stream_info_path",
                            os.path.join(original_data_path, 'drainage_line.shp'))
     
     out_rasterized_streamfile = os.path.join(output_data_path, 'rasterized_streamfile.tif')
@@ -70,9 +71,10 @@ def test_append_slope_to_stream_info_file():
     print "TEST 2: TEST ADDING SLOPE TO STREAM INFO FILE"
     arp = AutoRoutePrepare("autoroute_exe_path_dummy",
                            os.path.join(original_data_path, 'elevation.asc'),
+                           stream_info_file,
                            os.path.join(original_data_path, 'drainage_line.shp'))
 
-    arp.append_slope_to_stream_info_file(stream_info_file)
+    arp.append_slope_to_stream_info_file()
                                          
     ok_(fcmp(os.path.join(original_data_path, 'stream_info_solution.txt'), stream_info_file))
     

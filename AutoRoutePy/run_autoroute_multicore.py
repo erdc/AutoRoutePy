@@ -60,6 +60,7 @@ def prepare_autoroute_streamflow_multiprocess(autoroute_executable_location,
                                               stream_info_file,
                                               rapid_output_directory,
                                               return_period_file,
+                                              return_period,
                                               rapid_output_file,
                                               date_peak_search_start,
                                               date_peak_search_end
@@ -70,18 +71,16 @@ def prepare_autoroute_streamflow_multiprocess(autoroute_executable_location,
     os.chdir(master_watershed_autoroute_input_directory)
     #create input streamflow raster for AutoRoute
     arp = AutoRoutePrepare(autoroute_executable_location,
-                           elevation_raster)
+                           elevation_raster,
+                           stream_info_file)
     if RUN_CASE == 1:
-        arp.append_streamflow_from_ecmwf_rapid_output(stream_info_file=stream_info_file,
-                                                      prediction_folder=rapid_output_directory,
+        arp.append_streamflow_from_ecmwf_rapid_output(prediction_folder=rapid_output_directory,
                                                       method_x="mean_plus_std", method_y="max")
     elif RUN_CASE == 2:
-        arp.append_streamflow_from_return_period_file(stream_info_file=stream_info_file,
-                                                      return_period_file=return_period_file,
+        arp.append_streamflow_from_return_period_file(return_period_file=return_period_file,
                                                       return_period=return_period)
     elif RUN_CASE == 3:
-        arp.append_streamflow_from_rapid_output(stream_info_file=stream_info_file,
-                                                rapid_output_file=rapid_output_file,
+        arp.append_streamflow_from_rapid_output(rapid_output_file=rapid_output_file,
                                                 date_peak_search_start=date_peak_search_start,
                                                 date_peak_search_end=date_peak_search_end)
 
@@ -99,7 +98,8 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
                                                   args[6],
                                                   args[7],
                                                   args[8],
-                                                  args[9]
+                                                  args[9],
+                                                  args[10]
                                                   )
     except Exception as ex:
         print ex
@@ -262,6 +262,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                             stream_info_file,
                                             rapid_output_directory,
                                             return_period_file,
+                                            return_period,
                                             rapid_output_file,
                                             date_peak_search_start,
                                             date_peak_search_end))

@@ -37,15 +37,15 @@ def autoroute_prepare_single_folder(sub_folder,
         
         arp = AutoRoutePrepare(autoroute_executable_location,
                                elevation_dem_file,
+                               stream_info_file,
                                stream_network_shapefile)
                                
         arp.rasterize_stream_shapefile(out_rasterized_streamfile, river_id)
            
         arp.generate_stream_info_file_with_direction(out_rasterized_streamfile,
-                                                     stream_info_file,
                                                      search_radius=1)
        
-        arp.append_slope_to_stream_info_file(stream_info_file, river_id, slope_id)
+        arp.append_slope_to_stream_info_file(river_id, slope_id)
        
        
         #This section is optional (WARNING: See "Prepare Manning's N Raster" section for
@@ -108,7 +108,7 @@ def autoroute_prepare_multiprocess(watershed_folder,
                              for sub_folder in os.listdir(watershed_folder) \
                              if os.path.isdir(os.path.join(watershed_folder, sub_folder))]
 
-    pool = multiprocessing.Pool()
+    pool = multiprocessing.Pool(1)
 
     pool.imap_unordered(prepare_autoroute_multiprocess_worker,
                         multiprocessing_input,
