@@ -13,8 +13,55 @@ import numpy as np
 import os
 from osgeo import gdal, ogr, osr
 from RAPIDpy.dataset import RAPIDDataset
+from RAPIDpy.helper_functions import csv_to_list
 from subprocess import Popen, PIPE
+#------------------------------------------------------------------------------
+#Helper Functions
+#------------------------------------------------------------------------------
+def GetExtent(gt,cols,rows):
+    ''' Return list of corner coordinates from a geotransform
+    
+    @type gt:   C{tuple/list}
+    @param gt: geotransform
+    @type cols:   C{int}
+    @param cols: number of columns in the dataset
+    @type rows:   C{int}
+    @param rows: number of rows in the dataset
+    @rtype:    C{[float,...,float]}
+    @return:   coordinates of each corner
+    '''
+    ext=[]
+    xarr=[0,cols]
+    yarr=[0,rows]
+    
+    for px in xarr:
+        for py in yarr:
+            x=gt[0]+(px*gt[1])+(py*gt[2])
+            y=gt[3]+(px*gt[4])+(py*gt[5])
+            ext.append([x,y])
+            #print x,y
+        yarr.reverse()
+    return ext
 
+def ReprojectCoords(coords,src_srs,tgt_srs):
+    ''' Reproject a list of x,y coordinates.
+        
+        @type geom:     C{tuple/list}
+        @param geom:    List of [[x,y],...[x,y]] coordinates
+        @type src_srs:  C{osr.SpatialReference}
+        @param src_srs: OSR SpatialReference object
+        @type tgt_srs:  C{osr.SpatialReference}
+        @param tgt_srs: OSR SpatialReference object
+        @rtype:         C{tuple/list}
+        @return:        List of transformed [[x,y],...[x,y]] coordinates
+        '''
+    trans_coords=[]
+    transform = osr.CoordinateTransformation( src_srs, tgt_srs)
+    for x,y in coords:
+        x,y,z = transform.TransformPoint(x,y)
+        trans_coords.append([x,y])
+    return trans_coords
+    
 #------------------------------------------------------------------------------
 #Main Dataset Manager Class
 #------------------------------------------------------------------------------
@@ -24,25 +71,16 @@ class AutoRoutePrepare(object):
     Input: Elevation DEM, Stream Shapefile 
     """
 
-    def __init__(self, autoroute_executable_location, elevation_dem_path, stream_shapefile_path=""):
+    def __init__(self, autoroute_executable_location, elevation_dem_path, 
+                 stream_info_file, stream_shapefile_path=""):
         """
         Initialize the class with variables given by the user
         """
         self.autoroute_executable_location = autoroute_executable_location
         self.elevation_dem_path = elevation_dem_path
+        self.stream_info_file = stream_info_file
         self.stream_shapefile_path = stream_shapefile_path
     
-    def csv_to_list(self, csv_file, delimiter=','):
-        """
-        Reads in a CSV file and returns the contents as list,
-        where every row is stored as a sublist, and each element
-        in the sublist represents 1 cell in the table.
-     
-        """
-        with open(csv_file, 'rb') as csv_con:
-            reader = csv.reader(csv_con, delimiter=delimiter)
-            return list(reader)
-
     def generate_raster_from_dem(self, raster_path, dtype=gdal.GDT_Int32):
         """
         Create an empty raster based on the DEM file
@@ -79,9 +117,38 @@ class AutoRoutePrepare(object):
         err = gdal.RasterizeLayer(target_ds, [1], source_layer, options=["ATTRIBUTE=%s" % stream_id])
         if err != 0:
             raise Exception("error rasterizing layer: %s" % err)
+            
+    def spatially_filter_streamfile_layer_by_elevation_dem(self, stream_shp_layer):
+        """
+        This function returns the stream shapefile spatially filtered if possible
+        """
+        
+        #get extent from elevation raster to filter data
+        try:
+            print "Attempting to filter ..."
+            elevation_raster = gdal.Open(self.elevation_dem_path)
+
+            gt=elevation_raster.GetGeoTransform()
+            cols = elevation_raster.RasterXSize
+            rows = elevation_raster.RasterYSize
+            raster_ext = GetExtent(gt,cols,rows)
+
+            src_srs=osr.SpatialReference()
+            src_srs.ImportFromWkt(elevation_raster.GetProjection())
+            tgt_srs = stream_shp_layer.GetSpatialRef()
+
+            raster_ext = ReprojectCoords(raster_ext,src_srs,tgt_srs)
+            
+            #read in the shapefile and get the data for slope
+            string_rast_ext = ["{0} {1}".format(x,y) for x,y in raster_ext]
+            wkt = "POLYGON (({0},{1}))".format(",".join(string_rast_ext), string_rast_ext[0])
+            stream_shp_layer.SetSpatialFilter(ogr.CreateGeometryFromWkt(wkt))
+        except Exception as ex:
+            print ex
+            print "Skipping filter. This may take longer ..."
+            pass
 
     def generate_stream_info_file_with_direction(self, stream_raster_file_name,
-                                                 stream_info_file,
                                                  search_radius):
         """
         Generate stream info input file for AutoRoute starter with stream direction
@@ -94,7 +161,7 @@ class AutoRoutePrepare(object):
         print "Running AutoRoute prepare ..."
         process = Popen([self.autoroute_executable_location,
                          stream_raster_file_name,
-                         stream_info_file,
+                         self.stream_info_file,
                          str(search_radius)],
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
@@ -140,100 +207,32 @@ class AutoRoutePrepare(object):
 
         print "Time to run: %s" % (datetime.datetime.utcnow()-time_start)
 
-    def append_slope_to_stream_info_file(self, stream_info_file, stream_id_field="COMID", slope_field="slope"):
+    def append_slope_to_stream_info_file(self, stream_id_field="COMID", slope_field="slope"):
         """
         Add the slope attribute to the stream direction file
         """
-        def GetExtent(gt,cols,rows):
-            ''' Return list of corner coordinates from a geotransform
-            
-            @type gt:   C{tuple/list}
-            @param gt: geotransform
-            @type cols:   C{int}
-            @param cols: number of columns in the dataset
-            @type rows:   C{int}
-            @param rows: number of rows in the dataset
-            @rtype:    C{[float,...,float]}
-            @return:   coordinates of each corner
-            '''
-            ext=[]
-            xarr=[0,cols]
-            yarr=[0,rows]
-            
-            for px in xarr:
-                for py in yarr:
-                    x=gt[0]+(px*gt[1])+(py*gt[2])
-                    y=gt[3]+(px*gt[4])+(py*gt[5])
-                    ext.append([x,y])
-                    #print x,y
-                yarr.reverse()
-            return ext
-
-        def ReprojectCoords(coords,src_srs,tgt_srs):
-            ''' Reproject a list of x,y coordinates.
-                
-                @type geom:     C{tuple/list}
-                @param geom:    List of [[x,y],...[x,y]] coordinates
-                @type src_srs:  C{osr.SpatialReference}
-                @param src_srs: OSR SpatialReference object
-                @type tgt_srs:  C{osr.SpatialReference}
-                @param tgt_srs: OSR SpatialReference object
-                @rtype:         C{tuple/list}
-                @return:        List of transformed [[x,y],...[x,y]] coordinates
-                '''
-            trans_coords=[]
-            transform = osr.CoordinateTransformation( src_srs, tgt_srs)
-            for x,y in coords:
-                x,y,z = transform.TransformPoint(x,y)
-                trans_coords.append([x,y])
-            return trans_coords
-
         stream_shapefile = ogr.Open(self.stream_shapefile_path)
         stream_shp_layer = stream_shapefile.GetLayer()
 
-        #get extent from elevation raster to filter data
-        try:
-            print "Attempting to filter ..."
-            elevation_raster = gdal.Open(self.elevation_dem_path)
-
-            gt=elevation_raster.GetGeoTransform()
-            cols = elevation_raster.RasterXSize
-            rows = elevation_raster.RasterYSize
-            raster_ext = GetExtent(gt,cols,rows)
-
-            src_srs=osr.SpatialReference()
-            src_srs.ImportFromWkt(elevation_raster.GetProjection())
-            tgt_srs = stream_shp_layer.GetSpatialRef()
-
-            raster_ext = ReprojectCoords(raster_ext,src_srs,tgt_srs)
-            
-            #read in the shapefile and get the data for slope
-            string_rast_ext = ["{0} {1}".format(x,y) for x,y in raster_ext]
-            wkt = "POLYGON (({0},{1}))".format(",".join(string_rast_ext), string_rast_ext[0])
-            stream_shp_layer.SetSpatialFilter(ogr.CreateGeometryFromWkt(wkt))
-        except Exception as ex:
-            print ex
-            print "Skipping filter. This may take longer ..."
-            pass
+        self.spatially_filter_streamfile_layer_by_elevation_dem(stream_shp_layer)
 
         print "Writing output to file ..."
-        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
-        with open(stream_info_file, 'wb') as outfile:
+        with open(self.stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope"])
             for feature in stream_shp_layer:
                 #find all raster indices associates with the comid
-                raster_index_list = np.where(stream_id_list==int(feature.GetField(stream_id_field)))[0]
+                raster_index_list = np.where(stream_id_list==int(float(feature.GetField(stream_id_field))))[0]
                 #add slope associated with comid    
                 slope = feature.GetField(slope_field)
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:5] + [slope] + stream_info_table[raster_index][6:])
 
 
-    def append_streamflow_from_ecmwf_rapid_output(self, stream_info_file,
-                                                  prediction_folder,
+    def append_streamflow_from_ecmwf_rapid_output(self, prediction_folder,
                                                   method_x, method_y):
         """
         Generate StreamFlow raster
@@ -245,7 +244,7 @@ class AutoRoutePrepare(object):
      
         print "Generating Streamflow Raster ..."
         #get list of streamidS
-        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
 
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
@@ -313,7 +312,7 @@ class AutoRoutePrepare(object):
                 #pass
      
         print "Analyzing data and writing output ..."
-        with open(stream_info_file, 'wb') as outfile:
+        with open(self.stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
 
@@ -379,23 +378,22 @@ class AutoRoutePrepare(object):
                     writer.writerow(stream_info_table[raster_index][:6] + [data_val])
 
     
-    def append_streamflow_from_rapid_output(self, stream_info_file, 
-                                            rapid_output_file,
+    def append_streamflow_from_rapid_output(self, rapid_output_file,
                                             date_peak_search_start=None,
                                             date_peak_search_end=None):
         """
         Generate StreamFlow raster
         Create AutoRAPID INPUT from single RAPID output
         """
-        print "Appending streamflow for:", stream_info_file
+        print "Appending streamflow for:", self.stream_info_file
         #get information from datasets
         #get list of streamids
-        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
         
-        temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(stream_info_file)[0])
+        temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         print "Analyzing data and appending to list ..."
         with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
@@ -444,14 +442,13 @@ class AutoRoutePrepare(object):
 
 
          
-        os.remove(stream_info_file)
-        os.rename(temp_stream_info_file, stream_info_file)
+        os.remove(self.stream_info_file)
+        os.rename(temp_stream_info_file, self.stream_info_file)
 
-        print "Appending streamflow complete for:", stream_info_file
+        print "Appending streamflow complete for:", self.stream_info_file
 
 
-    def append_streamflow_from_return_period_file(self, stream_info_file, 
-                                                  return_period_file, 
+    def append_streamflow_from_return_period_file(self, return_period_file, 
                                                   return_period):
         """
         Generates return period raster from return period file
@@ -473,12 +470,12 @@ class AutoRoutePrepare(object):
         return_period_nc.close()
         
         #get where streamids are in the lookup grid id table
-        stream_info_table = self.csv_to_list(stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
         print "Analyzing data and appending to list ..."
         
-        with open(stream_info_file, 'wb') as outfile:
+        with open(self.stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             for streamid in streamid_list_unique:
@@ -495,3 +492,29 @@ class AutoRoutePrepare(object):
                 raster_index_list = np.where(streamid_list_full==streamid)[0]
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
+                    
+                    
+    def append_streamflow_from_stream_shapefile(self, stream_id_field, streamflow_field):
+        """
+        Appends streamflow from values in shapefile 
+        """
+        stream_shapefile = ogr.Open(self.stream_shapefile_path)
+        stream_shp_layer = stream_shapefile.GetLayer()
+
+        self.spatially_filter_streamfile_layer_by_elevation_dem(stream_shp_layer)
+
+        print "Writing output to file ..."
+        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
+        #Columns: DEM_1D_Index Row Col StreamID StreamDirection
+        stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
+        
+        with open(self.stream_info_file, 'wb') as outfile:
+            writer = csv.writer(outfile, delimiter=" ")
+            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            for feature in stream_shp_layer:
+                #find all raster indices associates with the comid
+                raster_index_list = np.where(stream_id_list==int(float(feature.GetField(stream_id_field))))[0]
+                #add streamflow associated with comid    
+                streamflow = feature.GetField(streamflow_field)
+                for raster_index in raster_index_list:
+                    writer.writerow(stream_info_table[raster_index][:6] + [streamflow])
