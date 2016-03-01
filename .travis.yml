@@ -10,10 +10,7 @@ python:
 
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y g++ python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
-
-#install RAPIDpy
-- pip install numpy RAPIDpy
+- sudo apt-get install -y g++ python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libssl-dev libffi-dev
 
 #-------------------------------------------------------------------------------
 #Installing gdal 2.0.2
