@@ -3,6 +3,8 @@ python-based interface for AutoRoute
 
 [![DOI](https://zenodo.org/badge/19918/erdc-cm/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/AutoRoutePy)
 
+[![Build Status](https://travis-ci.org/erdc-cm/AutoRoutePy.svg?branch=master)](https://travis-ci.org/erdc-cm/AutoRoutePy)
+
 [![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc-cm/AutoRoutePy/blob/master/LICENSE)
 
 ##Prereqs
