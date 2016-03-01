@@ -10,7 +10,7 @@ python:
 
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -y g++ python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libssl-dev libffi-dev
+- sudo apt-get install -y g++ python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libssl-dev libffi-dev libproj-dev
 
 
 #-------------------------------------------------------------------------------
