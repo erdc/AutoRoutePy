@@ -15,7 +15,7 @@ Python scripting interface for the AutoRoute progam. Has ability to Prepare inpu
 ##Installation
 
 ```
-$ git clone https://github.com/erdc-cm/AutoRoute-py.git
+$ git clone https://github.com/erdc-cm/AutoRoutePy.git
 $ cd AutoRoutePy
 ```
 To install:
