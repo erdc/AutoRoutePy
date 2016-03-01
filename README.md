@@ -1,5 +1,5 @@
 # AutoRoutePy
-python-based interface for AutoRoute
+Python scripting interface for the AutoRoute progam. Has ability to Prepare input from RAPID output (www.rapid-hub.org).
 
 [![DOI](https://zenodo.org/badge/19918/erdc-cm/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/AutoRoutePy)
 
