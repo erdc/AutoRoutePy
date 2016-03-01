@@ -1,6 +1,8 @@
 # AutoRoutePy
 python-based interface for AutoRoute
 
+[![DOI](https://zenodo.org/badge/19918/erdc-cm/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/AutoRoutePy)
+
 ##Prereqs
 - AutoRoute (GDAL Branch). See: https://github.com/erdc-cm/AutoRoute/tree/cgdal
 - RAPIDpy. See: https://github.com/erdc-cm/RAPIDpy
