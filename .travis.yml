@@ -12,20 +12,30 @@ before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -y g++ python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libssl-dev libffi-dev
 
+
+#-------------------------------------------------------------------------------
+#Creating directory for installation of gdal
+#-------------------------------------------------------------------------------
+- cd $TRAVIS_BUILD_DIR
+- mkdir ../installz
+- cd ../installz
+- export INSTALLZ_DIR=$PWD
+
 #-------------------------------------------------------------------------------
 #Installing gdal 2.0.2
 #-------------------------------------------------------------------------------
-- cd $TRAVIS_BUILD_DIR
+- cd $INSTALLZ_DIR
+- mkdir gdal_install
+- export GDAL_INSTALL_DIR=$INSTALLZ_DIR/gdal_install
 - wget "http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz"
 - tar -xzf gdal-2.0.2.tar.gz
 - cd gdal-2.0.2
-- ./configure --with-python
+- ./configure --with-python --prefix=$GDAL_INSTALL_DIR
 - make
-- sudo -i
 - make install
-- echo '/usr/local/lib' > /etc/ld.so.conf
-- ldconfig
-- exit
+- export PATH=$GDAL_INSTALL_DIR/bin:$PATH
+- export LD_LIBRARY_PATH=$GDAL_INSTALL_DIR/lib:$PATH
+- export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
 
 #*******************************************************************************
 #Installing AutoRoutePy
