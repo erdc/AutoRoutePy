@@ -33,7 +33,7 @@ exetutable, the path to your elevation raster, and the path to your stream netwo
 shapefile.
 
 ```python
-from AutoRoute.autoroute_prepare import AutoRoutePrepare
+from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 import os
 
 autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
@@ -73,7 +73,7 @@ WARNING: The land use raster must be in the same projection as your elevation ra
 If it is not in the same projection, either reproject using a GIS tool or use this
 script.
 ```
-from AutoRoute.reproject_raster import reproject_lu_raster
+from AutoRoutePy.reproject_raster import reproject_lu_raster
 
 dem_raster = '/autoroute-io/input/TuscaloosaCounty/n33w088/elevation.img'
 land_use_raster = '/autoroute_prepare/TuscaloosaCounty/NLCD2011_LC_N33W087.tif'
@@ -85,7 +85,7 @@ Once your land use raster is in the correct projection, use this process to gene
 manning n raster.
 
 ```python
-from AutoRoute.autoroute_prepare import AutoRoutePrepare
+from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 import os
 
 autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
