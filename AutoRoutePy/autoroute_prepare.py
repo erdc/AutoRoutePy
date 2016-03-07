@@ -217,7 +217,7 @@ class AutoRoutePrepare(object):
         self.spatially_filter_streamfile_layer_by_elevation_dem(stream_shp_layer)
 
         print "Writing output to file ..."
-        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         with open(self.stream_info_file, 'wb') as outfile:
@@ -244,7 +244,7 @@ class AutoRoutePrepare(object):
      
         print "Generating Streamflow Raster ..."
         #get list of streamidS
-        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
 
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
@@ -388,7 +388,7 @@ class AutoRoutePrepare(object):
         print "Appending streamflow for:", self.stream_info_file
         #get information from datasets
         #get list of streamids
-        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
@@ -472,7 +472,7 @@ class AutoRoutePrepare(object):
         return_period_nc.close()
         
         #get where streamids are in the lookup grid id table
-        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
         print "Analyzing data and appending to list ..."
@@ -506,7 +506,7 @@ class AutoRoutePrepare(object):
         self.spatially_filter_streamfile_layer_by_elevation_dem(stream_shp_layer)
 
         print "Writing output to file ..."
-        stream_info_table = csv_to_list(self.stream_info_file, " ")[1:]
+        stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         
