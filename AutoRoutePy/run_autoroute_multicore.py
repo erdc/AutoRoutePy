@@ -152,7 +152,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
         print "Running in mode", RUN_CASE, ". Generating input from ECMWF-RAPID output ..."
     
     #case 2: generate inputs from return period file
-    valid_return_period_list = ['return_period_20', 'return_period_10', 'return_period_2']
+    valid_return_period_list = ['max_flow', 'return_period_20', 'return_period_10', 'return_period_2']
 
     if return_period:
         if RUN_CASE > 0:
