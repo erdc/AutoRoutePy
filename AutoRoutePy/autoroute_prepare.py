@@ -279,7 +279,7 @@ class AutoRoutePrepare(object):
                 ensemble_index = int(os.path.basename(prediction_file)[:-3].split("_")[-1])
                 #Get hydrograph data from ECMWF Ensemble
                 with RAPIDDataset(prediction_file) as data_nc:
-                    data_values_2d_array = data_nc.get_qout_index(reordered_streamid_index_list)
+                    data_values_2d_array = data_nc.get_qout_index(reordered_streamid_index_list)[0]
     
                 #add data to main arrays and order in order of interim comids
                 if len(data_values_2d_array) > 0:
