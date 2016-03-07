@@ -268,7 +268,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
             
             output_shapefile_base_name = '%s_%s' % (autoroute_job_name, directory)
             #set up flood raster name
-            output_flood_raster_name = '%s_raster.tif' % output_shapefile_base_name
+            output_flood_raster_name = 'flood_raster_%s.tif' % output_shapefile_base_name
             master_output_flood_raster_name = os.path.join(autoroute_output_directory, output_flood_raster_name)
             #set up flood shapefile name
             output_shapefile_shp_name = '%s.shp' % output_shapefile_base_name
@@ -341,7 +341,7 @@ def run_autoroute_multicore(autoroute_executable_location, #location of AutoRout
                                        chunksize=1)
         pool_streamflow.close()
         pool_streamflow.join()
-    
+        
     #submit jobs to run
     if mode == "multiprocess":
         autoroute_job_info['multiprocess_worker_list'] = pool_main.imap_unordered(run_autoroute_multiprocess_worker, 
