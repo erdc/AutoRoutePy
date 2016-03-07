@@ -461,6 +461,8 @@ class AutoRoutePrepare(object):
             return_period_data = return_period_nc.variables['return_period_10'][:]
         elif return_period == "return_period_2": 
             return_period_data = return_period_nc.variables['return_period_2'][:]
+        elif return_period == "max_flow": 
+            return_period_data = return_period_nc.variables['return_period_2'][:]
         else:
             raise Exception("Invalid return period definition.")
         rivid_var = 'COMID'
