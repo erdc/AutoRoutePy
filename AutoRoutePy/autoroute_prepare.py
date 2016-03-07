@@ -260,7 +260,7 @@ class AutoRoutePrepare(object):
      
         print "Finding streamid indices ..."
         with RAPIDDataset(prediction_files[0]) as data_nc:
-            reordered_streamid_index_list = data_nc.get_subset_riverid_index_list(streamid_list_unique)
+            reordered_streamid_index_list = data_nc.get_subset_riverid_index_list(streamid_list_unique)[0]
 
             first_half_size = 40
             if data_nc.size_time == 41 or data_nc.size_time == 61:
@@ -279,33 +279,33 @@ class AutoRoutePrepare(object):
                 ensemble_index = int(os.path.basename(prediction_file)[:-3].split("_")[-1])
                 #Get hydrograph data from ECMWF Ensemble
                 with RAPIDDataset(prediction_file) as data_nc:
-                    data_values_2d_array = data_nc.get_qout_index(reordered_streamid_index_list)[0]
+                    data_values_2d_array = data_nc.get_qout_index(reordered_streamid_index_list)
     
-                #add data to main arrays and order in order of interim comids
-                if len(data_values_2d_array) > 0:
-                    for comid_index in range(len(streamid_list_unique)):
-                        if(ensemble_index < 52):
-                            reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:first_half_size]
-                            reach_prediciton_array_second_half[comid_index][file_index] = data_values_2d_array[comid_index][first_half_size:]
-                        if(ensemble_index == 52):
-                            if first_half_size == 65:
-                                #convert to 3hr-6hr
-                                streamflow_1hr = data_values_2d_array[comid_index][:90:3]
-                                # get the time series of 3 hr/6 hr data
-                                streamflow_3hr_6hr = data_values_2d_array[comid_index][90:]
-                                # concatenate all time series
-                                reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr_6hr])
-                            elif data_nc.size_time == 125:
-                                #convert to 6hr
-                                streamflow_1hr = data_values_2d_array[comid_index][:90:6]
-                                # calculate time series of 6 hr data from 3 hr data
-                                streamflow_3hr = data_values_2d_array[comid_index][90:109:2]
-                                # get the time series of 6 hr data
-                                streamflow_6hr = data_values_2d_array[comid_index][109:]
-                                # concatenate all time series
-                                reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr])
-                            else:
-                                reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:]
+                    #add data to main arrays and order in order of interim comids
+                    if len(data_values_2d_array) > 0:
+                        for comid_index in range(len(streamid_list_unique)):
+                            if(ensemble_index < 52):
+                                reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:first_half_size]
+                                reach_prediciton_array_second_half[comid_index][file_index] = data_values_2d_array[comid_index][first_half_size:]
+                            if(ensemble_index == 52):
+                                if first_half_size == 65:
+                                    #convert to 3hr-6hr
+                                    streamflow_1hr = data_values_2d_array[comid_index][:90:3]
+                                    # get the time series of 3 hr/6 hr data
+                                    streamflow_3hr_6hr = data_values_2d_array[comid_index][90:]
+                                    # concatenate all time series
+                                    reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr_6hr])
+                                elif data_nc.size_time == 125:
+                                    #convert to 6hr
+                                    streamflow_1hr = data_values_2d_array[comid_index][:90:6]
+                                    # calculate time series of 6 hr data from 3 hr data
+                                    streamflow_3hr = data_values_2d_array[comid_index][90:109:2]
+                                    # get the time series of 6 hr data
+                                    streamflow_6hr = data_values_2d_array[comid_index][109:]
+                                    # concatenate all time series
+                                    reach_prediciton_array_first_half[comid_index][file_index] = np.concatenate([streamflow_1hr, streamflow_3hr, streamflow_6hr])
+                                else:
+                                    reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:]
                                 
             except Exception as e:
                 print e
