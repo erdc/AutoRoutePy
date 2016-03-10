@@ -36,14 +36,16 @@ shapefile.
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 import os
 
-autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
-input_dir = '/home/alan/work/autoroute-io/input/philippines-luzon/15'
+autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+input_dir = '/autoroute-io/input/watershed-directory/sub_area-directory'
 stream_info_file = os.path.join(input_dir,'stream_info.txt')
+river_network_file = '/path/to/river_network.shp'
+
 
 arp = AutoRoutePrepare(autoroute_executable_location,
                        os.path.join(input_dir, 'elevation.dt2'),
 		       stream_info_file,
-                       '/path/to/DrainageLine.shp')
+                       river_network_file)
 ```
 
 Next, to connect the elevation DEM to the stream network, you need to rasterize the
@@ -75,9 +77,9 @@ script.
 ```
 from AutoRoutePy.reproject_raster import reproject_lu_raster
 
-dem_raster = '/autoroute-io/input/TuscaloosaCounty/n33w088/elevation.img'
-land_use_raster = '/autoroute_prepare/TuscaloosaCounty/NLCD2011_LC_N33W087.tif'
-reprojected_land_use_raster = '/autoroute_prepare/TuscaloosaCounty/NLCD2011_LC_N33W087_repr.tif'
+dem_raster = '/autoroute-io/input/watershed-directory/sub_area-directory/elevation.img'
+land_use_raster = '/autoroute_prepare/watershed-directory/NLCD2011_LC.tif'
+reprojected_land_use_raster = '/autoroute_prepare/watershed-directory/NLCD2011_LC_repr.tif'
 
 reproject_lu_raster(dem_raster, land_use_raster, reprojected_land_use_raster)
 ```
@@ -88,13 +90,14 @@ manning n raster.
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 import os
 
-autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
-input_dir = '/home/alan/work/autoroute-io/input/philippines-luzon/15'
+autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+input_dir = '/autoroute-io/input/watershed-directorysub_area-directory'
+reprojected_land_use_raster = '/autoroute_prepare/watershed-directory/NLCD2011_LC_repr.tif'
 
 arp = AutoRoutePrepare(autoroute_executable_location,
                        os.path.join(input_dir, 'elevation.dt2'))
 #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
-arp.generate_manning_n_raster(land_use_raster='/path/to/land_use/AutoRAPID_LULC.tif',
+arp.generate_manning_n_raster(land_use_raster=reprojected_land_use_raster,
                               input_manning_n_table='/path/to/Manning_N_Values/AR_Manning_n_for_NLCD_LOW.txt',
                               output_manning_n_raster=os.path.join(main_dir, 'manning_n.tif'),
                               default_manning_n=0.035) #value for manning's n to be used in raster if no value found in table
@@ -104,14 +107,14 @@ arp.generate_manning_n_raster(land_use_raster='/path/to/land_use/AutoRAPID_LULC.
 Here is an example for using multiprocessing to prepare input for AutoRoute. This requires each elevation DEM
 file to be inside of its own folder within the main watershed folder.
 
-WARNING: The land use raster must be in the same projection as your elevation raster! If it is not in the same projection, either reproject using a GIS tool or use this script.
+WARNING: The land use raster must be in the same projection as your elevation raster! If it is not in the same projection, either reproject using a GIS tool or use the aforementioned *reproject_lu_raster* function.
 
 ```python
 from AutoRoutePy.autoroute_prepare_multiprocess import autoroute_prepare_multiprocess
 
-autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/upperchocta',
+autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
                                autoroute_executable_location='/AutoRoute/source_code/autoroute',
-                               stream_network_shapefile='/gis_files/upperchocta/uc_flowlines_sl.shp',
+                               stream_network_shapefile='/path/to/river_network.shp',
                                #land_use_raster="", #optional
                                #manning_n_table="", #optional
                                #dem_extension='img', #default is img
@@ -130,9 +133,9 @@ AUTOROUTE_INPUT_FILE.txt.
 from AutoRoutePy.autoroute import AutoRoute
 from AutoRoutePy.helper_functions import case_insensitive_file_search
 
-autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
-autoroute_input_path = '/home/alan/work/autoroute-io/input/philippines-luzon/15'
-autoroute_output_path = '/home/alan/work/autoroute-io/output/philippines-luzon/15'
+autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_input_path = '/autoroute-io/input/watershed-directory/sub_area-directory'
+autoroute_output_path = '/autoroute-io/output/watershed-directory/sub_area-directory'
 out_shapefile_name = os.path.join(autoroute_output_path, 'flood_map_shp.tif')
 
 auto_mng = AutoRoute(autoroute_executable_location,
@@ -165,12 +168,12 @@ how you can use the defaults to generate the flood map shapefile and delete the 
 ```python
 from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
 
-autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
-autoroute_watershed_input_directory = '/home/alan/work/autoroute-io/input/philippines-luzon'
-autoroute_watershed_output_directory = '/home/alan/work/autoroute-io/output/philippines-luzon' 
+autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
+autoroute_watershed_output_directory = '/autoroute-io/output/watershed-directory' 
 
 #run based on return period data
-return_period_file = '/home/alan/work/rapid-io/output/philippines-luzon/return_periods.nc'
+return_period_file = '/rapid-io/output/watershed-directory/return_periods.nc'
 run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
                         autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
                         autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
@@ -191,9 +194,9 @@ how you can use the defaults to generate the flood map shapefile and delete the 
 ```python
 from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
 
-autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
-autoroute_watershed_input_directory = '/home/alan/work/autoroute-io/input/philippines-luzon'
-autoroute_watershed_output_directory = '/home/alan/work/autoroute-io/output/philippines-luzon' 
+autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
+autoroute_watershed_output_directory = '/autoroute-io/output/watershed-directory' 
 
 #run based on return period data
 run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
@@ -214,13 +217,13 @@ only producing the flood map raster.
 ```python
 from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
 
-autoroute_executable_location = '/home/alan/work/scripts/AutoRoute/source_code/autoroute'
-autoroute_watershed_input_directory = '/home/alan/work/autoroute-io/input/philippines-luzon'
-autoroute_watershed_output_directory = '/home/alan/work/autoroute-io/output/philippines-luzon' 
-condor_log_dir = '/home/alan/work/condor_logs'
+autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
+autoroute_watershed_output_directory = '/autoroute-io/output/watershed-directory' 
+condor_log_dir = '/condor_logs'
 
 #run based on return period data
-rapid_output_file = '/home/alan/work/rapid-io/output/philippines-luzon/Qout_lis_1980to2014.nc'
+rapid_output_file = '/rapid-io/output/watershed-directory/Qout_lis_1980to2014.nc'
 run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
                         autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
                         autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
