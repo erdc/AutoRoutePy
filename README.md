@@ -153,7 +153,7 @@ from datetime import datetime
 rapid_output_file = '/path/to/Qout_file.nc'
 
 
-##OPTION 1: Search for Peak with Date Search
+#OPTION 1: Search for Peak with Date Search
 #NOTE: Date search will only work with CF compliant RAPID files
 date_peak_search_start = datetime(1980,5,1)
 date_peak_search_end = datetime(1980,8,30)
@@ -161,14 +161,14 @@ date_peak_search_end = datetime(1980,8,30)
 arp.append_streamflow_from_rapid_output(rapid_output_file,
                                         date_peak_search_start, #optional
                                         date_peak_search_end) #optional
-##OPTION 2: Search for Peak in Entire Time Series
 
+#OPTION 2: Search for Peak in Entire Time Series
 arp.append_streamflow_from_rapid_output(rapid_output_file)
 
 ```
 ####Create AutoRoute input from return period file
 If you created a return period file from https://github.com/erdc-cm/spt_lsm_autorapid_process,
-You can add the peak flows from each return period to the stream_info.txt.
+you can add the peak flows from each return period to the stream_info.txt.
 
 NOTE: Valid return period options: return_period_20, return_period_10, return_period_2, max_flow
 
