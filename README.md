@@ -94,14 +94,15 @@ import os
 autoroute_executable_location = '/AutoRoute/source_code/autoroute'
 input_dir = '/autoroute-io/input/watershed-directorysub_area-directory'
 reprojected_land_use_raster = '/autoroute_prepare/watershed-directory/NLCD2011_LC_repr.tif'
+land_use_to_mannning_n_table = '/AutoRoute/mannings_n_tabes/AR_Manning_n_for_NLCD_LOW.txt'
 
 arp = AutoRoutePrepare(autoroute_executable_location,
                        os.path.join(input_dir, 'elevation.dt2'))
 #Method to generate manning_n file from DEM, Land Use Raster, and Manning N Table with new AutoRoute
 arp.generate_manning_n_raster(land_use_raster=reprojected_land_use_raster,
-                              input_manning_n_table='/path/to/Manning_N_Values/AR_Manning_n_for_NLCD_LOW.txt',
+                              input_manning_n_table=land_use_to_mannning_n_table,
                               output_manning_n_raster=os.path.join(main_dir, 'manning_n.tif'),
-                              default_manning_n=0.035) #value for manning's n to be used in raster if no value found in table
+                              default_manning_n=0.035)
 ```
 
 ###Prepare multiple inputs programmatically
