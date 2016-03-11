@@ -135,7 +135,6 @@ This is the code that starts the process off:
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 import os
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
 input_dir = '/autoroute-io/input/watershed-directorysub_area-directory'
 reprojected_land_use_raster = '/autoroute_prepare/watershed-directory/NLCD2011_LC_repr.tif'
 river_network_file = '/path/to/river_network.shp'
