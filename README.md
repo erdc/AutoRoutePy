@@ -74,7 +74,8 @@ Based on a land use raster and a land use table, you can generate a Manning’s 
 WARNING: The land use raster must be in the same projection as your elevation raster! 
 If it is not in the same projection, either reproject using a GIS tool or use this
 script.
-```
+
+```python
 from AutoRoutePy.reproject_raster import reproject_lu_raster
 
 dem_raster = '/autoroute-io/input/watershed-directory/sub_area-directory/elevation.img'
