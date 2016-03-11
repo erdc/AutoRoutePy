@@ -177,7 +177,7 @@ NOTE: Valid return period options: return_period_20, return_period_10, return_pe
 return_period_file = "/path/to/return_periods.nc"
 return_period = "return_period_20"
 arp.append_streamflow_from_return_period_file(return_period_file, 
-                                              return_period):
+                                              return_period)
 ```
 ####Create AutoRoute input from shapefile field
 If you already have a shapefile with the flow associated with each river segment,
