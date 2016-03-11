@@ -44,7 +44,7 @@ river_network_file = '/path/to/river_network.shp'
 
 arp = AutoRoutePrepare(autoroute_executable_location,
                        os.path.join(input_dir, 'elevation.dt2'),
-		       stream_info_file,
+                       stream_info_file,
                        river_network_file)
 ```
 
