@@ -36,7 +36,7 @@ shapefile.
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 import os
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_executable_location = '/AutoRoute/src/autoroute'
 input_dir = '/autoroute-io/input/watershed-directory/sub_area-directory'
 stream_info_file = os.path.join(input_dir,'stream_info.txt')
 river_network_file = '/path/to/river_network.shp'
@@ -91,7 +91,7 @@ manning n raster.
 from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
 import os
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_executable_location = '/AutoRoute/src/autoroute'
 input_dir = '/autoroute-io/input/watershed-directorysub_area-directory'
 reprojected_land_use_raster = '/autoroute_prepare/watershed-directory/NLCD2011_LC_repr.tif'
 land_use_to_mannning_n_table = '/AutoRoute/mannings_n_tabes/AR_Manning_n_for_NLCD_LOW.txt'
@@ -115,7 +115,7 @@ WARNING: The land use raster must be in the same projection as your elevation ra
 from AutoRoutePy.autoroute_prepare_multiprocess import autoroute_prepare_multiprocess
 
 autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
-                               autoroute_executable_location='/AutoRoute/source_code/autoroute',
+                               autoroute_executable_location='/AutoRoute/src/autoroute',
                                stream_network_shapefile='/path/to/river_network.shp',
                                #land_use_raster="", #optional
                                #manning_n_table="", #optional
@@ -200,7 +200,7 @@ AUTOROUTE_INPUT_FILE.txt.
 from AutoRoutePy.autoroute import AutoRoute
 from AutoRoutePy.helper_functions import case_insensitive_file_search
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_input_path = '/autoroute-io/input/watershed-directory/sub_area-directory'
 autoroute_output_path = '/autoroute-io/output/watershed-directory/sub_area-directory'
 out_shapefile_name = os.path.join(autoroute_output_path, 'flood_map_shp.tif')
@@ -235,7 +235,7 @@ how you can use the defaults to generate the flood map shapefile and delete the 
 ```python
 from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
 autoroute_watershed_output_directory = '/autoroute-io/output/watershed-directory' 
 
@@ -261,7 +261,7 @@ how you can use the defaults to generate the flood map shapefile and delete the 
 ```python
 from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
 autoroute_watershed_output_directory = '/autoroute-io/output/watershed-directory' 
 
@@ -284,7 +284,7 @@ only producing the flood map raster.
 ```python
 from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
 
-autoroute_executable_location = '/AutoRoute/source_code/autoroute'
+autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
 autoroute_watershed_output_directory = '/autoroute-io/output/watershed-directory' 
 condor_log_dir = '/condor_logs'
