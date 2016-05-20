@@ -220,7 +220,9 @@ class AutoRoutePrepare(object):
         stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
-        with open(self.stream_info_file, 'wb') as outfile:
+        
+        temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
+        with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope"])
             for feature in stream_shp_layer:
@@ -231,6 +233,8 @@ class AutoRoutePrepare(object):
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:5] + [slope] + stream_info_table[raster_index][6:])
 
+        os.remove(self.stream_info_file)
+        os.rename(temp_stream_info_file, self.stream_info_file)
 
     def append_streamflow_from_ecmwf_rapid_output(self, prediction_folder,
                                                   method_x, method_y):
@@ -312,7 +316,8 @@ class AutoRoutePrepare(object):
                 #pass
      
         print "Analyzing data and writing output ..."
-        with open(self.stream_info_file, 'wb') as outfile:
+        temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
+        with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
 
@@ -377,6 +382,8 @@ class AutoRoutePrepare(object):
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:6] + [data_val])
 
+        os.remove(self.stream_info_file)
+        os.rename(temp_stream_info_file, self.stream_info_file)
     
     def append_streamflow_from_rapid_output(self, rapid_output_file,
                                             date_peak_search_start=None,
@@ -406,7 +413,7 @@ class AutoRoutePrepare(object):
                 #perform operation in max chunk size of 4,000
                 max_chunk_size = 8*365*5*4000 #5 years of 3hr data (8/day) with 4000 comids at a time
                 time_length = 8*365*5 #assume 5 years of 3hr data
-                if time_range:
+                if time_range is not None:
                     time_length = len(time_range)
                 else:
                     time_length = data_nc.size_time
@@ -476,7 +483,8 @@ class AutoRoutePrepare(object):
         streamid_list_unique = np.unique(streamid_list_full)
         print "Analyzing data and appending to list ..."
         
-        with open(self.stream_info_file, 'wb') as outfile:
+        temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
+        with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             for streamid in streamid_list_unique:
@@ -494,6 +502,8 @@ class AutoRoutePrepare(object):
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:6] + [peak_flow])
                     
+        os.remove(self.stream_info_file)
+        os.rename(temp_stream_info_file, self.stream_info_file)
                     
     def append_streamflow_from_stream_shapefile(self, stream_id_field, streamflow_field):
         """
@@ -509,7 +519,8 @@ class AutoRoutePrepare(object):
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         
-        with open(self.stream_info_file, 'wb') as outfile:
+        temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
+        with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             for feature in stream_shp_layer:
@@ -519,3 +530,6 @@ class AutoRoutePrepare(object):
                 streamflow = feature.GetField(streamflow_field)
                 for raster_index in raster_index_list:
                     writer.writerow(stream_info_table[raster_index][:6] + [streamflow])
+
+        os.remove(self.stream_info_file)
+        os.rename(temp_stream_info_file, self.stream_info_file)
