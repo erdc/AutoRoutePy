@@ -401,8 +401,8 @@ class AutoRoutePrepare(object):
             
             with RAPIDDataset(rapid_output_file) as data_nc:
                 
-                time_range = data_nc.get_time_index_range(date_peak_search_start=date_peak_search_start,
-                                                          date_peak_search_end=date_peak_search_end)
+                time_range = data_nc.get_time_index_range(date_search_start=date_peak_search_start,
+                                                          date_search_start=date_peak_search_end)
                 #perform operation in max chunk size of 4,000
                 max_chunk_size = 8*365*5*4000 #5 years of 3hr data (8/day) with 4000 comids at a time
                 time_length = 8*365*5 #assume 5 years of 3hr data
@@ -423,8 +423,7 @@ class AutoRoutePrepare(object):
                         data_nc.get_subset_riverid_index_list(streamid_list_unique[list_index_start:list_index_end])
                         
                     streamflow_array = data_nc.get_qout_index(valid_stream_indices,
-                                                              date_peak_search_start,
-                                                              date_peak_search_end)
+                                                              time_index_array=time_range)
                     
                     print "Calculating peakflow and writing to file ..."
                     for streamid_index, streamid in enumerate(valid_stream_ids):
