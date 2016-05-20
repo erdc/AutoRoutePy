@@ -402,7 +402,7 @@ class AutoRoutePrepare(object):
             with RAPIDDataset(rapid_output_file) as data_nc:
                 
                 time_range = data_nc.get_time_index_range(date_search_start=date_peak_search_start,
-                                                          date_search_start=date_peak_search_end)
+                                                          date_search_end=date_peak_search_end)
                 #perform operation in max chunk size of 4,000
                 max_chunk_size = 8*365*5*4000 #5 years of 3hr data (8/day) with 4000 comids at a time
                 time_length = 8*365*5 #assume 5 years of 3hr data
