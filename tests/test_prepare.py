@@ -13,7 +13,8 @@ import numpy.testing as npt
 import os
 from osgeo import gdal
 from shutil import copy
-from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
+
+from AutoRoutePy.prepare import AutoRoutePrepare
 
 def test_rasterize_stream_shapefile():
     """

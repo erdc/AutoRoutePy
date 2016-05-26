@@ -11,9 +11,8 @@ import os
 import sys
 
 #local imports
-from AutoRoutePy.autoroute import AutoRoute 
-from AutoRoutePy.helper_functions import case_insensitive_file_search
-
+from ..autoroute import AutoRoute 
+from ..utilities import case_insensitive_file_search
 
 #------------------------------------------------------------------------------
 #MAIN PROCESS

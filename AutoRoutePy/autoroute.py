@@ -136,18 +136,3 @@ class AutoRoute(object):
                 print line
 
         print "Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start)
-
-
-if __name__ == "__main__":
-    main_dir = '/Volumes/AEGIS/AutoRAPID_TestCase/GaysMills'
-    auto_mng = AutoRoute('/Users/rdchlads/scripts/AutoRouteClass/source_code/autoroute',
-                         dem_raster_file_path=os.path.join(main_dir, 'DEM', 'imgn44w091_13.img'),
-                         stream_info_file_path=os.path.join(main_dir,'stream_info_all_use.txt'),
-                         out_flood_map_raster_path=os.path.join(main_dir,"flood_map_raster.tif"),
-                         #out_flood_map_shapefile_path=os.path.join(main_dir,"flood_map_shapefile.shp"),
-                         )
-                         
-    auto_mng.run_autoroute()
-
-            
-            

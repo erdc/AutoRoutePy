@@ -11,7 +11,7 @@ from filecmp import cmp as fcmp
 from nose.tools import raises, ok_
 import os
 from shutil import copy
-from AutoRoutePy.autoroute import AutoRoute
+from AutoRoutePy import AutoRoute
 
 @raises(Exception)
 def test_generate_autoroute_input_file_invalid():
