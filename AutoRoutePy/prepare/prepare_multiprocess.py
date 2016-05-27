@@ -96,7 +96,7 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
     """
     job_name = args[9]
     log_directory = args[10]
-    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
     with CaptureStdOutToLog(log_file_path):
         prepare_autoroute_streamflow_single_folder(args[0],
                                                    args[1],
@@ -212,7 +212,7 @@ def prepare_autoroute_multiprocess_worker(args):
     """
     job_name = args[15]
     log_directory = args[16]
-    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
     with CaptureStdOutToLog(log_file_path):
         prepare_autoroute_single_folder(args[0],
                                         args[1],

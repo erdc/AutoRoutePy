@@ -37,7 +37,7 @@ def run_autoroute_multiprocess_worker(args):
     """
     job_name = args[5]
     log_directory = args[6]
-    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
     with CaptureStdOutToLog(log_file_path):
         run_AutoRoute(autoroute_executable_location=args[0],
                       autoroute_input_path=args[1],
