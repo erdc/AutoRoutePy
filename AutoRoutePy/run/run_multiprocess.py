@@ -137,7 +137,6 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         master_watershed_autoroute_input_directory = os.path.join(autoroute_input_directory, directory)
         if os.path.isdir(master_watershed_autoroute_input_directory):
             autoroute_watershed_name = os.path.basename(autoroute_input_directory)
-            autoroute_job_name = "{0}-{1}"
             autoroute_job_name = "{0}-{1}".format(autoroute_watershed_name, directory)
             
             try:
@@ -173,7 +172,7 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                             prepare_log_directory
                                             ))
             
-            output_shapefile_base_name = '{0}_{1}'.format(autoroute_job_name, directory)
+            output_shapefile_base_name = '{0}_{1}'.format(autoroute_watershed_name, directory)
             #set up flood raster name
             output_flood_raster_name = 'flood_raster_{0}.tif'.format(output_shapefile_base_name)
             master_output_flood_raster_name = os.path.join(autoroute_output_directory, output_flood_raster_name)
