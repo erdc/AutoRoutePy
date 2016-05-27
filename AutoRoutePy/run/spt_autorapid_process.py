@@ -30,20 +30,22 @@ from ..post.post_process import get_shapefile_layergroup_bounds, rename_shapefil
 #----------------------------------------------------------------------------------------
 # MAIN PROCESS
 #----------------------------------------------------------------------------------------
-def run_autorapid_process(autoroute_executable_location, #location of AutoRoute executable
-                          autoroute_io_files_location, #path to AutoRoute input/output directory
-                          rapid_io_files_location, #path to RAPID input/output directory
-                          return_period_list=['return_period_20', 'return_period_10', 'return_period_2'],
-                          delete_flood_raster=True,
-                          generate_floodmap_shapefile=True,
-                          geoserver_url='',
-                          geoserver_username='',
-                          geoserver_password='',
-                          app_instance_id='',
-                          num_cpus=-17
-                          ):
+def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRoute executable
+                              autoroute_io_files_location, #path to AutoRoute input/output directory
+                              rapid_io_files_location, #path to RAPID input/output directory
+                              return_period_list=['return_period_20', 'return_period_10', 'return_period_2'],
+                              delete_flood_raster=True,
+                              generate_floodmap_shapefile=True,
+                              geoserver_url='',
+                              geoserver_username='',
+                              geoserver_password='',
+                              app_instance_id='',
+                              num_cpus=-17
+                              ):
     """
-    This it the main AutoRoute-RAPID process
+    This it the main AutoRoute-RAPID process for 
+    generating historical flood maps and uploading to geoserver
+    for the Streamflow Prediction Tool (SPT)
     """
     valid_return_period_list = ['max_flow', 'return_period_20', 'return_period_10', 'return_period_2']
 
