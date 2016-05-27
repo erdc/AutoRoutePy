@@ -31,7 +31,7 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
         if not os.path.exists(rapid_output_directory):
             raise Exception("ERROR: AutoRoute watershed {} missing RAPID forecast folder ...".format(autoroute_input_directory))
 
-        print "Running in mode", PREPARE_MODE, ". Generating input from ECMWF-RAPID output ..."
+        print("Running in mode {0}. Generating input from ECMWF-RAPID output ...".format(PREPARE_MODE))
     
     #case 2: generate inputs from return period file
     if return_period:
@@ -47,7 +47,7 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
         if not return_period_file or not os.path.exists(return_period_file):
             raise Exception("ERROR: AutoRoute watershed {} is missing return period file ...".format(autoroute_input_directory))
 
-        print "Running in mode", PREPARE_MODE, ". Generating input from return period file (", return_period, ") ..."
+        print("Running in mode {0}. Generating input from return period file ({1}) ...".format(PREPARE_MODE, return_period))
         
     #case 3: generate inputs from peaks of single rapid output
     if rapid_output_file:
@@ -58,11 +58,11 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
         if not os.path.exists(rapid_output_file):
             raise Exception("ERROR: AutoRoute watershed {} missing RAPID output file ...".format(autoroute_input_directory))
 
-        print "Running in mode", PREPARE_MODE, ". Generating input from RAPID output file (", rapid_output_file, ") ..."
+        print("Running in mode {0}. Generating input from RAPID output file ({1}) ...".format(PREPARE_MODE, rapid_output_file))
         
     return PREPARE_MODE
     
-def autoroute_prepare_streamflow_single_folder(PREPARE_MODE,
+def prepare_autoroute_streamflow_single_folder(PREPARE_MODE,
                                                autoroute_input_directory,
                                                stream_info_file,
                                                rapid_output_directory,
@@ -98,7 +98,7 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
     log_directory = args[12]
     log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
     with CaptureStdOutToLog(log_file_path):
-        autoroute_prepare_streamflow_single_folder(args[0],
+        prepare_autoroute_streamflow_single_folder(args[0],
                                                    args[1],
                                                    args[2],
                                                    args[3],
@@ -111,7 +111,7 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
                                                    args[10]
                                                    )
 
-def autoroute_prepare_single_folder(sub_folder,
+def prepare_autoroute_single_folder(sub_folder,
                                     autoroute_executable_location,
                                     stream_network_shapefile,
                                     land_use_raster="",
@@ -134,7 +134,7 @@ def autoroute_prepare_single_folder(sub_folder,
     and autoroute_executable_location and os.path.exists(autoroute_executable_location) \
     and stream_network_shapefile and os.path.exists(stream_network_shapefile):
     
-        print "Running AutoRoute prepare for folder:", sub_folder
+        print("Running AutoRoute prepare for folder: {0}".format(sub_folder))
         os.chdir(sub_folder)
         
         out_rasterized_streamfile = os.path.join(sub_folder, 'rasterized_streamfile.tif')
@@ -176,7 +176,7 @@ def autoroute_prepare_single_folder(sub_folder,
             pass
         
         if PREPARE_MODE > 0:
-            autoroute_prepare_streamflow_single_folder(PREPARE_MODE,
+            prepare_autoroute_streamflow_single_folder(PREPARE_MODE,
                                                        sub_folder,
                                                        stream_info_file,
                                                        rapid_output_directory,
@@ -205,7 +205,7 @@ def autoroute_prepare_single_folder(sub_folder,
             pass
 
     else:
-        print "Required files not found for preparing input. Skipping folder:", sub_folder
+        print("Required files not found for preparing input. Skipping folder: {0}".format(sub_folder))
 
 
 def prepare_autoroute_multiprocess_worker(args):
@@ -216,7 +216,7 @@ def prepare_autoroute_multiprocess_worker(args):
     log_directory = args[15]
     log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
     with CaptureStdOutToLog(log_file_path):
-        autoroute_prepare_single_folder(args[0],
+        prepare_autoroute_single_folder(args[0],
                                         args[1],
                                         args[2],
                                         args[3],
@@ -231,11 +231,12 @@ def prepare_autoroute_multiprocess_worker(args):
                                         args[12],
                                         args[13],
                                         args[14])
+    return job_name
 
 #----------------------------------------------------------------------------------------
 # MAIN PROCESS
 #----------------------------------------------------------------------------------------
-def autoroute_prepare_multiprocess(watershed_folder,
+def prepare_autoroute_multiprocess(watershed_folder,
                                    autoroute_executable_location,
                                    stream_network_shapefile,
                                    log_directory, #path to multiprocessing logs
@@ -263,6 +264,9 @@ def autoroute_prepare_multiprocess(watershed_folder,
         os.makedirs(prepare_log_directory)
     except OSError:
         pass
+    
+    print("Prepareing input for AutoRoute ...")
+    print("Logs can be found here: {0}".format(prepare_log_directory))
 
     multiprocessing_input = [(os.path.join(watershed_folder, sub_folder), autoroute_executable_location, stream_network_shapefile,
                               land_use_raster, manning_n_table, dem_extension, river_id, slope_id, default_manning_n,

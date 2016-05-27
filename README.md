@@ -37,13 +37,13 @@ WARNING: The land use raster must be in the same projection as your elevation ra
 
 ####Step 1: Import the function
 ```python
-from AutoRoutePy.prepare import autoroute_prepare_multiprocess
+from AutoRoutePy.prepare import prepare_autoroute_multiprocess
 ```
 ####Step 2: Run using multiprocessing
 
 #####Mode 1: Basic - just elevation DEM and stream network (NO STREAMFLOW)
 ```python
-autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
+prepare_autoroute_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
                                autoroute_executable_location='/AutoRoute/src/autoroute',
                                stream_network_shapefile='/path/to/river_network.shp',
                                log_directory="/path/to/logs", #path to multiprocessing logs
@@ -75,7 +75,7 @@ manning n raster.
 ```python
 land_use_to_mannning_n_table = '/AutoRoute/mannings_n_tabes/AR_Manning_n_for_NLCD_LOW.txt'
 
-autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
+prepare_autoroute_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
                                autoroute_executable_location='/AutoRoute/src/autoroute',
                                stream_network_shapefile='/path/to/river_network.shp',
                                log_directory="/path/to/logs", #path to multiprocessing logs
@@ -97,7 +97,7 @@ only the basic mode will be shown here.
 In this mode it will search for the peak from the entire simulation unless bounds are given from the date_peak_search_start or from the date_peak_search_end.
 ```python
 from datetime import datetime
-autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
+prepare_autoroute_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
                                autoroute_executable_location='/AutoRoute/src/autoroute',
                                stream_network_shapefile='/path/to/river_network.shp',
                                log_directory="/path/to/logs", #path to multiprocessing logs
@@ -115,7 +115,7 @@ autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/watershed_d
 #####Mode 3.2: Streamflow from return period file
 ```python
 from datetime import datetime
-autoroute_prepare_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
+prepare_autoroute_multiprocess(watershed_folder='/autoroute-io/input/watershed_directory',
                                autoroute_executable_location='/AutoRoute/src/autoroute',
                                stream_network_shapefile='/path/to/river_network.shp',
                                log_directory="/path/to/logs", #path to multiprocessing logs
@@ -140,8 +140,8 @@ This behaves the same as *autoroute_prepare_multiprocess* so you can refer to th
 3) No log directory as is prints to the console
 
 ```python
-from AutoRoutePy.prepare import autoroute_prepare_single_folder
-autoroute_prepare_single_folder(sub_folder='/autoroute-io/input/watershed_directory/sub_folder',
+from AutoRoutePy.prepare import prepare_autoroute_single_folder
+prepare_autoroute_single_folder(sub_folder='/autoroute-io/input/watershed_directory/sub_folder',
                                 autoroute_executable_location='/AutoRoute/src/autoroute',
                                 stream_network_shapefile='/path/to/river_network.shp',
                                 #land_use_raster="",
@@ -218,7 +218,7 @@ Once your land use raster is in the correct projection, use this process to gene
 manning n raster.
 
 ```python
-from AutoRoutePy.autoroute_prepare import AutoRoutePrepare
+from AutoRoutePy.prepare import AutoRoutePrepare
 import os
 
 autoroute_executable_location = '/AutoRoute/src/autoroute'
@@ -312,7 +312,7 @@ In addition to highlighting the usage of return period data and multiprocessing,
 how you can use the defaults to generate the flood map shapefile and delete the flood map raster.
 
 ```python
-from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
+from AutoRoutePy.run import run_autoroute_multiprocess
 
 autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
@@ -320,15 +320,15 @@ autoroute_watershed_output_directory = '/autoroute-io/output/watershed-directory
 log_dir = '/logs'
 
 #run based on return period data
-run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
-                        autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
-                        autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
-                        log_directory=log_dir,
-                        mode="multiprocess", #multiprocess or htcondor
-                        delete_flood_raster=False, #delete flood raster generated (default is True)
-                        generate_floodmap_shapefile=False, #generate a flood map shapefile (default is True)
-                        wait_for_all_processes_to_finish=True #this will wait for all processes to finish
-                        )
+run_autoroute_multiprocess(autoroute_executable_location, #location of AutoRoute executable
+                           autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
+                           autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
+                           log_directory=log_dir,
+                           mode="multiprocess", #multiprocess or htcondor
+                           delete_flood_raster=False, #delete flood raster generated (default is True)
+                           generate_floodmap_shapefile=False, #generate a flood map shapefile (default is True)
+                           wait_for_all_processes_to_finish=True #this will wait for all processes to finish
+                           )
 
 ```
 
@@ -337,7 +337,7 @@ In addition to highlighting the usage of return period data and multiprocessing,
 how you can use the defaults to generate the flood map shapefile and delete the flood map raster.
 
 ```python
-from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
+from AutoRoutePy.run import run_autoroute_multiprocess
 
 autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
@@ -346,17 +346,17 @@ log_dir = '/logs'
 
 #run based on return period data
 return_period_file = '/rapid-io/output/watershed-directory/return_periods.nc'
-run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
-                        autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
-                        autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
-                        log_directory=log_dir,
-                        return_period='return_period_20', # return period name in return period file
-                        return_period_file=return_period_file, # return period file generated from RAPID historical run
-                        mode="multiprocess", #multiprocess or htcondor
-                        #delete_flood_raster=True, #delete flood raster generated (default is True)
-                        #generate_floodmap_shapefile=True, #generate a flood map shapefile (default is True)
-                        wait_for_all_processes_to_finish=True #this will wait for all processes to finish
-                        )
+run_autoroute_multiprocess(autoroute_executable_location, #location of AutoRoute executable
+                           autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
+                           autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
+                           log_directory=log_dir,
+                           return_period='return_period_20', # return period name in return period file
+                           return_period_file=return_period_file, # return period file generated from RAPID historical run
+                           mode="multiprocess", #multiprocess or htcondor
+                           #delete_flood_raster=True, #delete flood raster generated (default is True)
+                           #generate_floodmap_shapefile=True, #generate a flood map shapefile (default is True)
+                           wait_for_all_processes_to_finish=True #this will wait for all processes to finish
+                           )
 
 ```
 
@@ -367,7 +367,7 @@ only producing the flood map raster.
 
 ```python
 from datetime import datetime
-from AutoRoutePy.run_autoroute_multicore import run_autoroute_multicore
+from AutoRoutePy.run import run_autoroute_multiprocess
 
 autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_watershed_input_directory = '/autoroute-io/input/watershed-directory'
@@ -376,18 +376,18 @@ condor_log_dir = '/condor_logs'
 
 #run based on return period data
 rapid_output_file = '/rapid-io/output/watershed-directory/Qout_lis_1980to2014.nc'
-run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
-                        autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
-                        autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
-                        log_directory=condor_init_dir,
-                        rapid_output_file=rapid_output_file, #RAPID Qout file from simulation
-                        #date_peak_search_start=datetime(1990, 1, 1), #optional
-                        #date_peak_search_end=datetime(1990, 3, 5), #optional
-                        mode="htcondor", #multiprocess or htcondor
-                        delete_flood_raster=False, #delete flood raster generated (default is True)
-                        generate_floodmap_shapefile=False, #generate a flood map shapefile (default is True)
-                        wait_for_all_processes_to_finish=True #this will wait for all processes to finish
-)
+run_autoroute_multiprocess(autoroute_executable_location, #location of AutoRoute executable
+                           autoroute_input_directory=autoroute_watershed_input_directory, #path to AutoRoute input directory
+                           autoroute_output_directory=autoroute_watershed_output_directory, #path to AutoRoute output directory
+                           log_directory=condor_init_dir,
+                           rapid_output_file=rapid_output_file, #RAPID Qout file from simulation
+                           #date_peak_search_start=datetime(1990, 1, 1), #optional
+                           #date_peak_search_end=datetime(1990, 3, 5), #optional
+                           mode="htcondor", #multiprocess or htcondor
+                           delete_flood_raster=False, #delete flood raster generated (default is True)
+                           generate_floodmap_shapefile=False, #generate a flood map shapefile (default is True)
+                           wait_for_all_processes_to_finish=True #this will wait for all processes to finish
+                           )
 
 ```
 ###Mode 2. Running single AutoRoute process
@@ -396,8 +396,8 @@ running AutoRoute. AutoRoutePy allows you to change the parameters in the python
 AUTOROUTE_INPUT_FILE.txt.
 
 ```python
-from AutoRoutePy.autoroute import AutoRoute
-from AutoRoutePy.helper_functions import case_insensitive_file_search
+from AutoRoutePy import AutoRoute
+from AutoRoutePy.utilities import case_insensitive_file_search
 
 autoroute_executable_location = '/AutoRoute/src/autoroute'
 autoroute_input_path = '/autoroute-io/input/watershed-directory/sub_area-directory'

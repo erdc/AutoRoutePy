@@ -76,5 +76,5 @@ def get_valid_num_cpus(num_cpus):
     if num_cpus > recommended_max_num_cpus:
         print("WARNING: Number of cpus allotted ({0}) exceeds maximum recommended ({1}). " \
               "This may cause memory issues ...".format(num_cpus, recommended_max_num_cpus))
-
+    print("Running with {0} CPUS".format(num_cpus))
     return num_cpus
