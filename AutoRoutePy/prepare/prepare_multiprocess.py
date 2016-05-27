@@ -263,7 +263,7 @@ def prepare_autoroute_multiprocess(watershed_folder,
     except OSError:
         pass
     
-    print("Prepareing input for AutoRoute ...")
+    print("Preparing input for AutoRoute ...")
     print("Logs can be found here: {0}".format(prepare_log_directory))
 
     watershed_name = os.path.basename(watershed_folder)
@@ -281,7 +281,7 @@ def prepare_autoroute_multiprocess(watershed_folder,
                                          chunksize=1)
                                          
     for multi_job_output in mp_worker_list:
-        print("JOB FINISHED: {0}".format(multi_job_output[0]))
+        print("JOB FINISHED: {0}".format(multi_job_output))
 
     pool.close()
     pool.join()
