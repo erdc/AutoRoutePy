@@ -1,4 +1,5 @@
 from glob import glob
+from datetime import datetime
 import multiprocessing
 import os
 
@@ -95,7 +96,7 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
     """
     job_name = args[11]
     log_directory = args[12]
-    log_file_path = os.path.join(log_directory, "{0}.log".format(job_name))
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
     with CaptureStdOutToLog(log_file_path):
         autoroute_prepare_streamflow_single_folder(args[0],
                                                    args[1],
@@ -213,7 +214,7 @@ def prepare_autoroute_multiprocess_worker(args):
     """
     job_name = os.path.basename(args[0])
     log_directory = args[15]
-    log_file_path = os.path.join(log_directory, "{0}.log".format(job_name))
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
     with CaptureStdOutToLog(log_file_path):
         autoroute_prepare_single_folder(args[0],
                                         args[1],
@@ -237,6 +238,7 @@ def prepare_autoroute_multiprocess_worker(args):
 def autoroute_prepare_multiprocess(watershed_folder,
                                    autoroute_executable_location,
                                    stream_network_shapefile,
+                                   log_directory, #path to multiprocessing logs
                                    land_use_raster="",
                                    manning_n_table="",
                                    dem_extension='img',
@@ -249,7 +251,6 @@ def autoroute_prepare_multiprocess(watershed_folder,
                                    rapid_output_file="", #path to RAPID output file to be used
                                    date_peak_search_start=None, #datetime of start of search for peakflow
                                    date_peak_search_end=None, #datetime of end of search for peakflow
-                                   log_directory="", #path to multiprocessing logs
                                    num_cpus=-17
                                    ):
     """
