@@ -132,9 +132,12 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
     for directory in os.listdir(autoroute_input_directory):
         master_watershed_autoroute_input_directory = os.path.join(autoroute_input_directory, directory)
         if os.path.isdir(master_watershed_autoroute_input_directory):
-            autoroute_job_name = os.path.basename(autoroute_input_directory)
+            autoroute_watershed_name = os.path.basename(autoroute_input_directory)
+            autoroute_job_name = "{0}-{1}"
             print("Adding AutoRoute jobs for watershed: {0}" \
-                  "sub directory: {1}".format(autoroute_job_name, directory))
+                  "sub directory: {1}".format(autoroute_watershed_name, directory))
+                  
+            autoroute_job_name = "{0}-{1}".format(autoroute_watershed_name, directory)
             
             try:
                 case_insensitive_file_search(master_watershed_autoroute_input_directory, r'elevation\.(?!prj)')
