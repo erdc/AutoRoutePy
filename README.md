@@ -298,7 +298,7 @@ arp.append_streamflow_from_stream_shapefile(stream_id_field,
 
 
 ##Running AutoRoute
-###Mode 2: Running AutoRoute using Multiprocessing
+###Method 1: Running AutoRoute using Multiprocessing
 There are several options to run AutoRoute using multiprocessing. In this example, you will learn how to run
 this process with multiprocessing and HTCondor. Also, you will learn how to use the return period file to 
 run this process as well as the output of a RAPID (rapid-hub.org) simulation.
@@ -390,7 +390,7 @@ run_autoroute_multiprocess(autoroute_executable_location, #location of AutoRoute
                            )
 
 ```
-###Mode 2. Running single AutoRoute process
+###Method 2. Running single AutoRoute process
 This provides a simple example for running a single AutoRoute process. There are many different configurations for
 running AutoRoute. AutoRoutePy allows you to change the parameters in the python code by name or through a 
 AUTOROUTE_INPUT_FILE.txt.
