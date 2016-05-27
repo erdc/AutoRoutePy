@@ -281,7 +281,7 @@ def prepare_autoroute_multiprocess(watershed_folder,
                                          chunksize=1)
                                          
     for multi_job_output in mp_worker_list:
-        print("JOB FINISHED: {0}".format(multi_job_output[0]))
+        print("JOB FINISHED: {0}".format(multi_job_output))
 
     pool.close()
     pool.join()
