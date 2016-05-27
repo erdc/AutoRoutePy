@@ -103,12 +103,15 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         os.makedirs(prepare_log_directory)
     except OSError:
         pass
-
+    if PREPARE_MODE > 0:
+        print("Streamflow preparation logs can be found here: {0}".format(prepare_log_directory))
+        
     run_log_directory = os.path.join(log_directory, "run")
     try:
         os.makedirs(run_log_directory)
     except OSError:
         pass
+    print("AutoRoute simulation logs can be found here: {0}".format(run_log_directory))
 
     #keep list of jobs
     autoroute_job_info = {
@@ -230,8 +233,9 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                                     master_output_flood_raster_name,
                                                                     master_output_shapefile_shp_name,
                                                                     delete_flood_raster,
-                                                                    run_log_directory,
-                                                                    autoroute_job_name))
+                                                                    autoroute_job_name,
+                                                                    run_log_directory
+                                                                    ))
                 """
                 #For testing function serially
                 run_autoroute_multiprocess_worker((autoroute_executable_location,
@@ -239,16 +243,20 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                    master_output_flood_raster_name,
                                                    master_output_shapefile_shp_name,
                                                    delete_flood_raster,
+                                                   autoroute_job_name,
                                                    run_log_directory))
                 """
     if PREPARE_MODE > 0:
         #generate streamflow
-        pool_streamflow.imap_unordered(prepare_autoroute_streamflow_multiprocess_worker,
-                                       streamflow_job_list,
-                                       chunksize=1)
+        streamflow_job_list = pool_streamflow.imap_unordered(prepare_autoroute_streamflow_multiprocess_worker,
+                                                             streamflow_job_list,
+                                                             chunksize=1)
+        for streamflow_job_output in streamflow_job_list:
+            print("STREAMFLOW READY: {0}".format(streamflow_job_output))
         pool_streamflow.close()
         pool_streamflow.join()
         
+    print("Running AutoRoute simulations ...")            
     #submit jobs to run
     if mode == "multiprocess":
         autoroute_job_info['multiprocess_worker_list'] = pool_main.imap_unordered(run_autoroute_multiprocess_worker, 

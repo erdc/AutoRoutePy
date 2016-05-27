@@ -108,6 +108,7 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
                                                    args[7],
                                                    args[8],
                                                    )
+    return job_name
 
 def prepare_autoroute_single_folder(sub_folder,
                                     autoroute_executable_location,
