@@ -97,11 +97,15 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
     
     local_scripts_location = os.path.dirname(os.path.realpath(__file__))
 
-    #initialize HTCondor/multiprocess log directory
+    #initialize HTCondor/multiprocess log directories
     prepare_log_directory = os.path.join(log_directory, "prepare")
-    run_log_directory = os.path.join(log_directory, "run")
     try:
         os.makedirs(prepare_log_directory)
+    except OSError:
+        pass
+
+    run_log_directory = os.path.join(log_directory, "run")
+    try:
         os.makedirs(run_log_directory)
     except OSError:
         pass
@@ -116,7 +120,6 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                            
     if mode == "multiprocess":
         num_cpus = get_valid_num_cpus(num_cpus)                    
-        print("Number of CPUS: {0}".format(num_cpus))
         #start pool
         pool_streamflow = multiprocessing.Pool(num_cpus)
         pool_main = multiprocessing.Pool(num_cpus)
@@ -162,8 +165,9 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                             rapid_output_file,
                                             date_peak_search_start,
                                             date_peak_search_end,
-                                            prepare_log_directory,
-                                            autoroute_job_name))
+                                            autoroute_job_name,
+                                            prepare_log_directory
+                                            ))
             
             output_shapefile_base_name = '{0}_{1}'.format(autoroute_job_name, directory)
             #set up flood raster name
@@ -235,7 +239,7 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                    master_output_flood_raster_name,
                                                    master_output_shapefile_shp_name,
                                                    delete_flood_raster,
-                                                   log_directory))
+                                                   run_log_directory))
                 """
     if PREPARE_MODE > 0:
         #generate streamflow

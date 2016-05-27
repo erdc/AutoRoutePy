@@ -94,8 +94,8 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
     """
     Prepare streamflow for AutoRoute simulation on one of multiple cores
     """
-    job_name = args[11]
-    log_directory = args[12]
+    job_name = args[9]
+    log_directory = args[10]
     log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
     with CaptureStdOutToLog(log_file_path):
         prepare_autoroute_streamflow_single_folder(args[0],
@@ -107,8 +107,6 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
                                                    args[6],
                                                    args[7],
                                                    args[8],
-                                                   args[9],
-                                                   args[10]
                                                    )
 
 def prepare_autoroute_single_folder(sub_folder,
@@ -277,9 +275,12 @@ def prepare_autoroute_multiprocess(watershed_folder,
 
     pool = multiprocessing.Pool(get_valid_num_cpus(num_cpus))
 
-    pool.imap_unordered(prepare_autoroute_multiprocess_worker,
-                        multiprocessing_input,
-                        chunksize=1)
+    mp_worker_list = pool.imap_unordered(prepare_autoroute_multiprocess_worker,
+                                         multiprocessing_input,
+                                         chunksize=1)
+                                         
+    for multi_job_output in mp_worker_list:
+        print("JOB FINISHED: {0}".format(multi_job_output[0]))
 
     pool.close()
     pool.join()
