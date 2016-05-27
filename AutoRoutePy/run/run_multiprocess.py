@@ -37,7 +37,7 @@ def run_autoroute_multiprocess_worker(args):
     """
     job_name = args[5]
     log_directory = args[6]
-    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
     with CaptureStdOutToLog(log_file_path):
         run_AutoRoute(autoroute_executable_location=args[0],
                       autoroute_input_path=args[1],
@@ -134,9 +134,6 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         if os.path.isdir(master_watershed_autoroute_input_directory):
             autoroute_watershed_name = os.path.basename(autoroute_input_directory)
             autoroute_job_name = "{0}-{1}"
-            print("Adding AutoRoute jobs for watershed: {0}" \
-                  "sub directory: {1}".format(autoroute_watershed_name, directory))
-                  
             autoroute_job_name = "{0}-{1}".format(autoroute_watershed_name, directory)
             
             try:
@@ -265,14 +262,14 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         #wait for all of the jobs to complete
         if mode == "multiprocess":
             for multi_job_output in autoroute_job_info['multiprocess_worker_list']:
-                print("READY: {0}".format(multi_job_output[1]))
+                print("JOB FINISHED: {0}".format(multi_job_output[1]))
             #just in case ...
             pool_main.close()
             pool_main.join()
         else:
             for htcondor_job_index, htcondor_job in enumerate(autoroute_job_info['htcondor_job_list']):
                 htcondor_job.wait()
-                print("READY: {0}".format(autoroute_job_info['htcondor_job_info'][htcondor_job_index]['output_shapefile_base_name']))
+                print("JOB FINISHED: {0}".format(autoroute_job_info['htcondor_job_info'][htcondor_job_index]['output_shapefile_base_name']))
     
         print("Time to complete entire AutoRoute process: {0}".format(datetime.utcnow()-time_start_all))
         

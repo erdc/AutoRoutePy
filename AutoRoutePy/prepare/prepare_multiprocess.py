@@ -96,7 +96,7 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
     """
     job_name = args[9]
     log_directory = args[10]
-    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
     with CaptureStdOutToLog(log_file_path):
         prepare_autoroute_streamflow_single_folder(args[0],
                                                    args[1],
@@ -210,9 +210,9 @@ def prepare_autoroute_multiprocess_worker(args):
     """
     Run autoroute on one of multiple cores
     """
-    job_name = os.path.basename(args[0])
-    log_directory = args[15]
-    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now()))
+    job_name = args[15]
+    log_directory = args[16]
+    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
     with CaptureStdOutToLog(log_file_path):
         prepare_autoroute_single_folder(args[0],
                                         args[1],
@@ -266,10 +266,11 @@ def prepare_autoroute_multiprocess(watershed_folder,
     print("Prepareing input for AutoRoute ...")
     print("Logs can be found here: {0}".format(prepare_log_directory))
 
+    job_name = 
     multiprocessing_input = [(os.path.join(watershed_folder, sub_folder), autoroute_executable_location, stream_network_shapefile,
                               land_use_raster, manning_n_table, dem_extension, river_id, slope_id, default_manning_n,
                               rapid_output_directory, return_period, return_period_file, rapid_output_file,
-                              date_peak_search_start, date_peak_search_end, prepare_log_directory)
+                              date_peak_search_start, date_peak_search_end, "{0}-{1}".format(watershed_folder, sub_folder), prepare_log_directory)
                              for sub_folder in os.listdir(watershed_folder) \
                              if os.path.isdir(os.path.join(watershed_folder, sub_folder))]
 
