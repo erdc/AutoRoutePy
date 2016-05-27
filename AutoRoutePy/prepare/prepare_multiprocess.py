@@ -266,10 +266,11 @@ def prepare_autoroute_multiprocess(watershed_folder,
     print("Prepareing input for AutoRoute ...")
     print("Logs can be found here: {0}".format(prepare_log_directory))
 
+    watershed_name = os.path.basename(watershed_folder)
     multiprocessing_input = [(os.path.join(watershed_folder, sub_folder), autoroute_executable_location, stream_network_shapefile,
                               land_use_raster, manning_n_table, dem_extension, river_id, slope_id, default_manning_n,
                               rapid_output_directory, return_period, return_period_file, rapid_output_file,
-                              date_peak_search_start, date_peak_search_end, "{0}-{1}".format(watershed_folder, sub_folder), prepare_log_directory)
+                              date_peak_search_start, date_peak_search_end, "{0}-{1}".format(watershed_name, sub_folder), prepare_log_directory)
                              for sub_folder in os.listdir(watershed_folder) \
                              if os.path.isdir(os.path.join(watershed_folder, sub_folder))]
 
