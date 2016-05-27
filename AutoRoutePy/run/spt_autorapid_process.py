@@ -24,7 +24,7 @@ from ..utilities import (case_insensitive_file_search,
                         get_watershed_subbasin_from_folder)
 
 #package imports
-from .autoroute_multicore import run_autoroute_multicore 
+from .run_multiprocess import run_autoroute_multiprocess
 from ..post.post_process import get_shapefile_layergroup_bounds, rename_shapefiles
 
 #----------------------------------------------------------------------------------------
@@ -88,17 +88,17 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                 pass
             #loop through sub-directories
             autoroute_watershed_directory_path = os.path.join(autoroute_input_folder, autoroute_input_directory)        
-            autoroute_watershed_jobs[autoroute_input_directory] = run_autoroute_multicore(autoroute_executable_location, #location of AutoRoute executable
-                                                                                          autoroute_input_directory=autoroute_watershed_directory_path, #path to AutoRoute input directory
-                                                                                          autoroute_output_directory=master_watershed_autoroute_output_directory, #path to AutoRoute output directory
-                                                                                          return_period=return_period, # return period name in return period file
-                                                                                          return_period_file=return_period_file, # return period file generated from RAPID historical run
-                                                                                          mode="multiprocess", #multiprocess or htcondor
-                                                                                          delete_flood_raster=delete_flood_raster, #delete flood raster generated
-                                                                                          generate_floodmap_shapefile=generate_floodmap_shapefile, #generate a flood map shapefile
-                                                                                          wait_for_all_processes_to_finish=False,
-                                                                                          num_cpus=num_cpus
-                                                                                          )
+            autoroute_watershed_jobs[autoroute_input_directory] = run_autoroute_multiprocess(autoroute_executable_location, #location of AutoRoute executable
+                                                                                             autoroute_input_directory=autoroute_watershed_directory_path, #path to AutoRoute input directory
+                                                                                             autoroute_output_directory=master_watershed_autoroute_output_directory, #path to AutoRoute output directory
+                                                                                             return_period=return_period, # return period name in return period file
+                                                                                             return_period_file=return_period_file, # return period file generated from RAPID historical run
+                                                                                             mode="multiprocess", #multiprocess or htcondor
+                                                                                             delete_flood_raster=delete_flood_raster, #delete flood raster generated
+                                                                                             generate_floodmap_shapefile=generate_floodmap_shapefile, #generate a flood map shapefile
+                                                                                             wait_for_all_processes_to_finish=False,
+                                                                                             num_cpus=num_cpus
+                                                                                             )
     geoserver_manager = None
     if GEOSERVER_ENABLED and geoserver_url and geoserver_username \
         and geoserver_password and app_instance_id and generate_floodmap_shapefile:
