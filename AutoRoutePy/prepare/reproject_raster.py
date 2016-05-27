@@ -22,11 +22,3 @@ def reproject_lu_raster(dem_raster, land_use_raster, reprojected_land_use_raster
     dst_ds = gdal.GetDriverByName('GTiff').CreateCopy(reprojected_land_use_raster, tmp_ds)
     dst_ds = None
     src_ds = None
-
-"""
-if __name__ == "__main__":
-    dem_raster = '/home/chluser/work/autoroute-io/input/TuscaloosaCounty/n33w088/elevation.img'
-    land_use_raster = '/home/chluser/work/autoroute_prepare/TuscaloosaCounty/LandCover/NLCD2011_LC_N33W087.tif'
-    reprojected_land_use_raster = '/home/chluser/work/autoroute_prepare/TuscaloosaCounty/LandCover/NLCD2011_LC_N33W087_repr.tif'
-    reproject_lu_raster(dem_raster, land_use_raster, reprojected_land_use_raster)
-"""
