@@ -266,7 +266,6 @@ def prepare_autoroute_multiprocess(watershed_folder,
     print("Prepareing input for AutoRoute ...")
     print("Logs can be found here: {0}".format(prepare_log_directory))
 
-    job_name = 
     multiprocessing_input = [(os.path.join(watershed_folder, sub_folder), autoroute_executable_location, stream_network_shapefile,
                               land_use_raster, manning_n_table, dem_extension, river_id, slope_id, default_manning_n,
                               rapid_output_directory, return_period, return_period_file, rapid_output_file,
