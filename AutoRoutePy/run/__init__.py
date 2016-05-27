@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-from .autorapid_process import run_autorapid_process
-from .autoroute_multicore import run_autoroute_multicore
+from .spt_autorapid_process import run_spt_autorapid_process
+from .run_multiprocess import run_autoroute_multiprocess
