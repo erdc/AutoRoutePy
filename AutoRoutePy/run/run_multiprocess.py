@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 ##
-##  run_autoroute_multicore.py
+##  run_multiprocess.py
 ##  AutoRoutePy
 ##
 ##  Created by Alan D. Snow.
 ##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
-##
+##  License BSD 3-Clause
+
 from datetime import datetime
 import multiprocessing
 import os
@@ -24,7 +25,7 @@ except ImportError:
 from ..utilities import (CaptureStdOutToLog, 
                         case_insensitive_file_search, 
                         get_valid_num_cpus)
-from .worker_process_multicore import run_AutoRoute
+from .worker_multiprocess import run_AutoRoute
 from ..prepare.prepare_multiprocess import (get_valid_streamflow_prepare_mode,
                                             prepare_autoroute_streamflow_multiprocess_worker)
 
@@ -45,7 +46,7 @@ def run_autoroute_multiprocess_worker(args):
                       out_shapefile_name=args[3],
                       delete_flood_raster=args[4])
         
-    return args[2], args[3]
+    return args[2], args[3], job_name
 
 #----------------------------------------------------------------------------------------
 # MAIN PROCESS
@@ -221,7 +222,8 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                               output_shapefile_shp_name,
                                                               delete_flood_raster))
                 autoroute_job_info['htcondor_job_list'].append(job)
-                autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
+                autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name,
+                                                                 'autoroute_job_name': autoroute_job_name})
 
             else: #mode == "multiprocess":
             
@@ -270,14 +272,14 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         #wait for all of the jobs to complete
         if mode == "multiprocess":
             for multi_job_output in autoroute_job_info['multiprocess_worker_list']:
-                print("JOB FINISHED: {0}".format(multi_job_output[1]))
+                print("JOB FINISHED: {0}".format(multi_job_output[2]))
             #just in case ...
             pool_main.close()
             pool_main.join()
         else:
             for htcondor_job_index, htcondor_job in enumerate(autoroute_job_info['htcondor_job_list']):
                 htcondor_job.wait()
-                print("JOB FINISHED: {0}".format(autoroute_job_info['htcondor_job_info'][htcondor_job_index]['output_shapefile_base_name']))
+                print("JOB FINISHED: {0}".format(autoroute_job_info['htcondor_job_info'][htcondor_job_index]['autoroute_job_name']))
     
         print("Time to complete entire AutoRoute process: {0}".format(datetime.utcnow()-time_start_all))
         

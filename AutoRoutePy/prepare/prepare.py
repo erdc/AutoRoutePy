@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 ##
-##  autoroute_prepare.py
+##  prepare.py
 ##  AutoRoutePy
 ##
-##  Created by Alan D. Snow 2015.
-##  Copyright © 2015 Alan D Snow. All rights reserved.
-##
+##  Created by Alan D. Snow.
+##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
+##  License BSD 3-Clause
+
 import csv
 import datetime
 from netCDF4 import Dataset
