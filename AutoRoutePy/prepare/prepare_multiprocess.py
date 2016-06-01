@@ -73,7 +73,7 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
         print("Running in mode {0}. Generating input from RAPID output file ({1}) ...".format(PREPARE_MODE, rapid_output_file))
         
     #case 4: generate inputs from shapefile streamflow
-    if river_id and streamflow_id is not None and streamflow_id and stream_network_shapefile:
+    if river_id and streamflow_id and stream_network_shapefile:
         if PREPARE_MODE > 0:
             raise Exception("ERROR: Cannon run more than one mode for AutoRoute process ...")
 
