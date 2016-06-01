@@ -23,7 +23,7 @@ See: https://github.com/erdc-cm/AutoRoutePy/wiki/Prepare-Multiprocessing-Workflo
 ###2. Prepare single folder inputs
 See: https://github.com/erdc-cm/AutoRoutePy/wiki/Prepare-Workflow 
 
-###3. Prepare infividual inputs
+###3. Prepare individual inputs
 See: https://github.com/erdc-cm/AutoRoutePy/wiki/Prepare-Individual-Items
 
 
