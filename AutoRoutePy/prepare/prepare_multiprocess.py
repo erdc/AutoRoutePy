@@ -292,7 +292,7 @@ def prepare_autoroute_multiprocess(watershed_folder,
                                    dem_extension='img',
                                    river_id='COMID',
                                    slope_id='SLOPE',
-                                   streamflow_id=None,
+                                   streamflow_id="",
                                    default_manning_n=0.035,
                                    rapid_output_directory="", #path to ECMWF RAPID input/output directory
                                    return_period="", # return period name in return period file
