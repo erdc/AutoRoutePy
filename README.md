@@ -17,7 +17,7 @@ See: https://github.com/erdc-cm/AutoRoutePy/wiki/Installation
 
 ##Prepare Inputs for AutoRoute
 
-###1. Prepare multiple inputs using multiprocessing.
+###1. Prepare multiple inputs using multiprocessing
 See: https://github.com/erdc-cm/AutoRoutePy/wiki/Prepare-Multiprocessing-Workflow
 
 ###2. Prepare single folder inputs
@@ -28,7 +28,7 @@ See: https://github.com/erdc-cm/AutoRoutePy/wiki/Prepare-Individual-Items
 
 
 ##Running AutoRoute
-###1. Running AutoRoute using Multiprocessing
+###1. Running AutoRoute using multiprocessing
 See: https://github.com/erdc-cm/AutoRoutePy/wiki/Run-AutoRoute-Multiprocessing
 
 ###2. Running single AutoRoute process
