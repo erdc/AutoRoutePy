@@ -61,11 +61,14 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                rapid_output_file="", #path to RAPID output file to be used
                                date_peak_search_start=None, #datetime of start of search for peakflow
                                date_peak_search_end=None, #datetime of end of search for peakflow
+                               river_id="", #field with unique identifier of river
+                               streamflow_id="", #field with streamflow
+                               stream_network_shapefile="", #stream network shapefile
                                mode="multiprocess", #multiprocess or htcondor 
                                delete_flood_raster=True, #delete flood raster generated
                                generate_floodmap_shapefile=True, #generate a flood map shapefile
-                               wait_for_all_processes_to_finish=True,
-                               num_cpus=-17
+                               wait_for_all_processes_to_finish=True, #waits for all processes to finish before ending script
+                               num_cpus=-17 #number of processes to use on computer
                                ):
     """
     This it the main AutoRoute-RAPID process
@@ -86,7 +89,10 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                      rapid_output_directory,
                                                      return_period,
                                                      return_period_file,
-                                                     rapid_output_file
+                                                     rapid_output_file,
+                                                     river_id,
+                                                     streamflow_id,
+                                                     stream_network_shapefile,
                                                      )    
     #--------------------------------------------------------------------------
     #Initialize Run
@@ -168,8 +174,11 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                             rapid_output_file,
                                             date_peak_search_start,
                                             date_peak_search_end,
+                                            river_id,
+                                            streamflow_id,
+                                            stream_network_shapefile,
                                             autoroute_job_name,
-                                            prepare_log_directory
+                                            prepare_log_directory,
                                             ))
             
             output_shapefile_base_name = '{0}_{1}'.format(autoroute_watershed_name, directory)
@@ -257,7 +266,7 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         pool_streamflow.close()
         pool_streamflow.join()
         
-    print("Running AutoRoute simulations ...")            
+    print("Running AutoRoute simulations ...")
     #submit jobs to run
     if mode == "multiprocess":
         autoroute_job_info['multiprocess_worker_list'] = pool_main.imap_unordered(run_autoroute_multiprocess_worker, 
@@ -281,5 +290,5 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                 print("JOB FINISHED: {0}".format(autoroute_job_info['htcondor_job_info'][htcondor_job_index]['autoroute_job_name']))
     
         print("Time to complete entire AutoRoute process: {0}".format(datetime.utcnow()-time_start_all))
-        
-    return autoroute_job_info
+    else:       
+        return autoroute_job_info

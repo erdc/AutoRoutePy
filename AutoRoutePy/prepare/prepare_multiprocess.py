@@ -23,7 +23,10 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
                                       rapid_output_directory,
                                       return_period,
                                       return_period_file,
-                                      rapid_output_file
+                                      rapid_output_file,
+                                      river_id,
+                                      streamflow_id,
+                                      stream_network_shapefile,
                                       ):
     """
     Determines valid mode to run for streamflor prepare
@@ -69,6 +72,17 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
 
         print("Running in mode {0}. Generating input from RAPID output file ({1}) ...".format(PREPARE_MODE, rapid_output_file))
         
+    #case 4: generate inputs from shapefile streamflow
+    if river_id and streamflow_id is not None and streamflow_id and stream_network_shapefile:
+        if PREPARE_MODE > 0:
+            raise Exception("ERROR: Cannon run more than one mode for AutoRoute process ...")
+
+        PREPARE_MODE = 4
+        if not os.path.exists(stream_network_shapefile):
+            raise Exception("ERROR: AutoRoute watershed {} missing stream network shapefile ...".format(autoroute_input_directory))
+
+        print("Running in mode {0}. Generating input from stream network shapefile ({1}) ...".format(PREPARE_MODE, rapid_output_file))
+
     return PREPARE_MODE
     
 def prepare_autoroute_streamflow_single_folder(PREPARE_MODE,
@@ -79,7 +93,10 @@ def prepare_autoroute_streamflow_single_folder(PREPARE_MODE,
                                                return_period,
                                                rapid_output_file,
                                                date_peak_search_start,
-                                               date_peak_search_end
+                                               date_peak_search_end,
+                                               river_id,
+                                               streamflow_id,
+                                               stream_network_shapefile,
                                                ):
     """
     This function prepares streamflow inputs in single directory for AutoRoute
@@ -87,7 +104,7 @@ def prepare_autoroute_streamflow_single_folder(PREPARE_MODE,
     os.chdir(autoroute_input_directory)
     
     #create input streamflow raster for AutoRoute
-    arp = AutoRoutePrepare("", "", stream_info_file)
+    arp = AutoRoutePrepare("", "", stream_info_file, stream_network_shapefile)
     if PREPARE_MODE == 1:
         arp.append_streamflow_from_ecmwf_rapid_output(prediction_folder=rapid_output_directory,
                                                       method_x="mean_plus_std", method_y="max")
@@ -98,13 +115,15 @@ def prepare_autoroute_streamflow_single_folder(PREPARE_MODE,
         arp.append_streamflow_from_rapid_output(rapid_output_file=rapid_output_file,
                                                 date_peak_search_start=date_peak_search_start,
                                                 date_peak_search_end=date_peak_search_end)
+    elif PREPARE_MODE == 4:
+        arp.append_streamflow_from_stream_shapefile(river_id, streamflow_id)
 
 def prepare_autoroute_streamflow_multiprocess_worker(args):
     """
     Prepare streamflow for AutoRoute simulation on one of multiple cores
     """
-    job_name = args[9]
-    log_directory = args[10]
+    job_name = args[12]
+    log_directory = args[13]
     log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
     with CaptureStdOutToLog(log_file_path):
         prepare_autoroute_streamflow_single_folder(args[0],
@@ -116,6 +135,9 @@ def prepare_autoroute_streamflow_multiprocess_worker(args):
                                                    args[6],
                                                    args[7],
                                                    args[8],
+                                                   args[9],
+                                                   args[10],
+                                                   args[11],
                                                    )
     return job_name
 
@@ -127,6 +149,7 @@ def prepare_autoroute_single_folder(sub_folder,
                                     dem_extension='img',
                                     river_id='COMID',
                                     slope_id='SLOPE',
+                                    streamflow_id="",
                                     default_manning_n=0.035,
                                     rapid_output_directory="", #path to ECMWF RAPID input/output directory
                                     return_period="", # return period name in return period file
@@ -138,6 +161,7 @@ def prepare_autoroute_single_folder(sub_folder,
     """
     Worker process for multiprocessing that manages one folders preparation
     """
+    print(sub_folder)
     if sub_folder and os.path.exists(sub_folder) \
     and autoroute_executable_location and os.path.exists(autoroute_executable_location) \
     and stream_network_shapefile and os.path.exists(stream_network_shapefile):
@@ -179,7 +203,11 @@ def prepare_autoroute_single_folder(sub_folder,
                                                              rapid_output_directory,
                                                              return_period,
                                                              return_period_file,
-                                                             rapid_output_file)
+                                                             rapid_output_file,
+                                                             river_id,
+                                                             streamflow_id,
+                                                             stream_network_shapefile,
+                                                             )
         except Exception as ex:
             print(ex)
             PREPARE_MODE = 0
@@ -194,7 +222,11 @@ def prepare_autoroute_single_folder(sub_folder,
                                                        return_period,
                                                        rapid_output_file,
                                                        date_peak_search_start,
-                                                       date_peak_search_end)
+                                                       date_peak_search_end,
+                                                       river_id,
+                                                       streamflow_id,
+                                                       stream_network_shapefile,
+                                                       )
        
         #----------------------------------------------------------------------
         # Method to generate manning_n file from DEM, Land Use Raster, 
@@ -207,7 +239,8 @@ def prepare_autoroute_single_folder(sub_folder,
             arp.generate_manning_n_raster(land_use_raster,
                                           manning_n_table,
                                           os.path.join(sub_folder, 'manning_n.tif'),
-                                          default_manning_n)
+                                          default_manning_n
+                                          )
 
         try:
             os.remove(out_rasterized_streamfile)
@@ -222,9 +255,11 @@ def prepare_autoroute_multiprocess_worker(args):
     """
     Run autoroute on one of multiple cores
     """
-    job_name = args[15]
-    log_directory = args[16]
-    log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
+    job_name = args[16]
+    log_directory = args[17]
+    log_file_path = os.path.join(log_directory,
+                                 "{0}-{1}.log".format(job_name,
+                                                      datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
     with CaptureStdOutToLog(log_file_path):
         prepare_autoroute_single_folder(args[0],
                                         args[1],
@@ -240,7 +275,9 @@ def prepare_autoroute_multiprocess_worker(args):
                                         args[11],
                                         args[12],
                                         args[13],
-                                        args[14])
+                                        args[14],
+                                        args[15]
+                                        )
     return job_name
 
 #----------------------------------------------------------------------------------------
@@ -255,6 +292,7 @@ def prepare_autoroute_multiprocess(watershed_folder,
                                    dem_extension='img',
                                    river_id='COMID',
                                    slope_id='SLOPE',
+                                   streamflow_id=None,
                                    default_manning_n=0.035,
                                    rapid_output_directory="", #path to ECMWF RAPID input/output directory
                                    return_period="", # return period name in return period file
@@ -279,13 +317,27 @@ def prepare_autoroute_multiprocess(watershed_folder,
     print("Logs can be found here: {0}".format(prepare_log_directory))
 
     watershed_name = os.path.basename(watershed_folder)
-    multiprocessing_input = [(os.path.join(watershed_folder, sub_folder), autoroute_executable_location, stream_network_shapefile,
-                              land_use_raster, manning_n_table, dem_extension, river_id, slope_id, default_manning_n,
-                              rapid_output_directory, return_period, return_period_file, rapid_output_file,
-                              date_peak_search_start, date_peak_search_end, "{0}-{1}".format(watershed_name, sub_folder), prepare_log_directory)
+    multiprocessing_input = [(os.path.join(watershed_folder, sub_folder),
+                              autoroute_executable_location,
+                              stream_network_shapefile,
+                              land_use_raster,
+                              manning_n_table,
+                              dem_extension,
+                              river_id,
+                              slope_id,
+                              streamflow_id,
+                              default_manning_n,
+                              rapid_output_directory,
+                              return_period,
+                              return_period_file,
+                              rapid_output_file,
+                              date_peak_search_start,
+                              date_peak_search_end,
+                              "{0}-{1}".format(watershed_name, sub_folder),
+                              prepare_log_directory
+                             ) 
                              for sub_folder in os.listdir(watershed_folder) \
                              if os.path.isdir(os.path.join(watershed_folder, sub_folder))]
-
     pool = multiprocessing.Pool(get_valid_num_cpus(num_cpus))
 
     mp_worker_list = pool.imap_unordered(prepare_autoroute_multiprocess_worker,
