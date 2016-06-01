@@ -65,8 +65,8 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                streamflow_id="", #field with streamflow
                                stream_network_shapefile="", #stream network shapefile
                                mode="multiprocess", #multiprocess or htcondor 
-                               delete_flood_raster=True, #delete flood raster generated
-                               generate_floodmap_shapefile=True, #generate a flood map shapefile
+                               delete_flood_raster=False, #delete flood raster generated
+                               generate_floodmap_shapefile=False, #generate a flood map shapefile
                                wait_for_all_processes_to_finish=True, #waits for all processes to finish before ending script
                                num_cpus=-17 #number of processes to use on computer
                                ):
