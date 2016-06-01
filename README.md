@@ -28,8 +28,8 @@ See: https://github.com/erdc-cm/AutoRoutePy/wiki/Prepare-Individual-Items
 
 
 ##Running AutoRoute
-###Method 1: Running AutoRoute using Multiprocessing
+###1. Running AutoRoute using Multiprocessing
 See: https://github.com/erdc-cm/AutoRoutePy/wiki/Run-AutoRoute-Multiprocessing
 
-###Method 2. Running single AutoRoute process
+###2. Running single AutoRoute process
 See: https://github.com/erdc-cm/AutoRoutePy/wiki/Run-AutoRoute-Individual-Items
