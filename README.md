@@ -5,7 +5,6 @@ streamflow data. The streamflow data can be input directly from RAPID
 output (www.rapid-hub.org) or from a field in the river shapefile. 
 Additionally, AutoRoutePy is capable of preparing inputs and
 running multiple AutoRoute processes simultaneously using multiprocessing.
-Python scripting interface for the AutoRoute progam.
 
 [![DOI](https://zenodo.org/badge/19918/erdc-cm/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/AutoRoutePy)
 
