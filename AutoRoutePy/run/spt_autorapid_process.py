@@ -33,9 +33,10 @@ from ..post.post_process import get_shapefile_layergroup_bounds, rename_shapefil
 def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRoute executable
                               autoroute_io_files_location, #path to AutoRoute input/output directory
                               rapid_io_files_location, #path to RAPID input/output directory
+                              log_directory,
                               return_period_list=['return_period_20', 'return_period_10', 'return_period_2'],
-                              delete_flood_raster=True,
-                              generate_floodmap_shapefile=True,
+                              delete_flood_raster=False,
+                              generate_floodmap_shapefile=False,
                               geoserver_url='',
                               geoserver_username='',
                               geoserver_password='',
@@ -88,14 +89,15 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                 pass
             #loop through sub-directories
             autoroute_watershed_directory_path = os.path.join(autoroute_input_folder, autoroute_input_directory)        
-            autoroute_watershed_jobs[autoroute_input_directory] = run_autoroute_multiprocess(autoroute_executable_location, #location of AutoRoute executable
-                                                                                             autoroute_input_directory=autoroute_watershed_directory_path, #path to AutoRoute input directory
-                                                                                             autoroute_output_directory=master_watershed_autoroute_output_directory, #path to AutoRoute output directory
-                                                                                             return_period=return_period, # return period name in return period file
-                                                                                             return_period_file=return_period_file, # return period file generated from RAPID historical run
-                                                                                             mode="multiprocess", #multiprocess or htcondor
-                                                                                             delete_flood_raster=delete_flood_raster, #delete flood raster generated
-                                                                                             generate_floodmap_shapefile=generate_floodmap_shapefile, #generate a flood map shapefile
+            autoroute_watershed_jobs[autoroute_input_directory] = run_autoroute_multiprocess(autoroute_executable_location, 
+                                                                                             autoroute_input_directory=autoroute_watershed_directory_path, 
+                                                                                             autoroute_output_directory=master_watershed_autoroute_output_directory,
+                                                                                             log_directory=log_directory,
+                                                                                             return_period=return_period, 
+                                                                                             return_period_file=return_period_file, 
+                                                                                             mode="multiprocess", 
+                                                                                             delete_flood_raster=delete_flood_raster, 
+                                                                                             generate_floodmap_shapefile=generate_floodmap_shapefile,
                                                                                              wait_for_all_processes_to_finish=False,
                                                                                              num_cpus=num_cpus
                                                                                              )
