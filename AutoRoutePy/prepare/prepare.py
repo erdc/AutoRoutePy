@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 ##
-##  autoroute_prepare.py
+##  prepare.py
 ##  AutoRoutePy
 ##
-##  Created by Alan D. Snow 2015.
-##  Copyright © 2015 Alan D Snow. All rights reserved.
-##
+##  Created by Alan D. Snow.
+##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
+##  License BSD 3-Clause
+
 import csv
 import datetime
 from netCDF4 import Dataset
@@ -420,7 +421,11 @@ class AutoRoutePrepare(object):
                     time_length = data_nc.size_time
 
                 streamid_list_length = len(streamid_list_unique)
-                step_size = min(max(1, max_chunk_size/time_length), streamid_list_length)
+                if streamid_list_length <=0:
+                    raise IndexError("Invalid stream info file {0}." \
+                                     " No stream ID's found ...".format(self.stream_info_file))
+                
+                step_size = min(max_chunk_size/time_length, streamid_list_length)
                 for list_index_start in xrange(0, streamid_list_length, step_size):
                     list_index_end = min(list_index_start+step_size, streamid_list_length)
                     print "River ID subset range {0} to {1} of {2} ...".format(list_index_start,

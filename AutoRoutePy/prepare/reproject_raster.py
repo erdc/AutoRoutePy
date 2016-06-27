@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+##
+##  reproject_raster.py
+##  AutoRoutePy
+##
+##  Created by Alan D. Snow.
+##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
+##  License BSD 3-Clause
+
 from osgeo import gdal
 
 def reproject_lu_raster(dem_raster, land_use_raster, reprojected_land_use_raster):

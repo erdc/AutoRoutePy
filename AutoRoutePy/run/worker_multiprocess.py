@@ -1,12 +1,12 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-##  multicore_worker_process.py
+##  worker_multiprocess.py
 ##  AutoRoutePy
 ##
-##  Created by Alan D. Snow 2015.
-##  Copyright © 2015 Alan D Snow. All rights reserved.
-##
+##  Created by Alan D. Snow.
+##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
+##  License BSD 3-Clause
+
 import os
 import sys
 
@@ -32,7 +32,7 @@ def run_AutoRoute(autoroute_executable_location,
     
     #get the raster for elevation    
     try:
-        elevation_raster = case_insensitive_file_search(autoroute_input_path, r'elevation\.(?!prj)')
+        elevation_raster = case_insensitive_file_search(autoroute_input_path, r'elevation\.(?:[^prj|xml])')
     except Exception:
         try:
             elevation_raster = case_insensitive_file_search(os.path.join(autoroute_input_path, 'elevation'), r'hdr\.adf')
@@ -43,7 +43,7 @@ def run_AutoRoute(autoroute_executable_location,
 
     #get the manning n raster
     try:
-        manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?!prj)')
+        manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?:[^prj|xml])')
     except Exception:
         manning_n_raster = ""
         print "Manning n raster not found. Ignoring this file ..."

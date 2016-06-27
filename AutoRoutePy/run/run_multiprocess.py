@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 ##
-##  run_autoroute_multicore.py
+##  run_multiprocess.py
 ##  AutoRoutePy
 ##
 ##  Created by Alan D. Snow.
 ##  Copyright © 2015-2016 Alan D Snow. All rights reserved.
-##
+##  License BSD 3-Clause
+
 from datetime import datetime
 import multiprocessing
 import os
@@ -24,7 +25,7 @@ except ImportError:
 from ..utilities import (CaptureStdOutToLog, 
                         case_insensitive_file_search, 
                         get_valid_num_cpus)
-from .worker_process_multicore import run_AutoRoute
+from .worker_multiprocess import run_AutoRoute
 from ..prepare.prepare_multiprocess import (get_valid_streamflow_prepare_mode,
                                             prepare_autoroute_streamflow_multiprocess_worker)
 
@@ -45,7 +46,7 @@ def run_autoroute_multiprocess_worker(args):
                       out_shapefile_name=args[3],
                       delete_flood_raster=args[4])
         
-    return args[2], args[3]
+    return args[2], args[3], job_name
 
 #----------------------------------------------------------------------------------------
 # MAIN PROCESS
@@ -60,11 +61,14 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                rapid_output_file="", #path to RAPID output file to be used
                                date_peak_search_start=None, #datetime of start of search for peakflow
                                date_peak_search_end=None, #datetime of end of search for peakflow
+                               river_id="", #field with unique identifier of river
+                               streamflow_id="", #field with streamflow
+                               stream_network_shapefile="", #stream network shapefile
                                mode="multiprocess", #multiprocess or htcondor 
-                               delete_flood_raster=True, #delete flood raster generated
-                               generate_floodmap_shapefile=True, #generate a flood map shapefile
-                               wait_for_all_processes_to_finish=True,
-                               num_cpus=-17
+                               delete_flood_raster=False, #delete flood raster generated
+                               generate_floodmap_shapefile=False, #generate a flood map shapefile
+                               wait_for_all_processes_to_finish=True, #waits for all processes to finish before ending script
+                               num_cpus=-17 #number of processes to use on computer
                                ):
     """
     This it the main AutoRoute-RAPID process
@@ -85,7 +89,10 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                      rapid_output_directory,
                                                      return_period,
                                                      return_period_file,
-                                                     rapid_output_file
+                                                     rapid_output_file,
+                                                     river_id,
+                                                     streamflow_id,
+                                                     stream_network_shapefile,
                                                      )    
     #--------------------------------------------------------------------------
     #Initialize Run
@@ -103,12 +110,15 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         os.makedirs(prepare_log_directory)
     except OSError:
         pass
-
+    if PREPARE_MODE > 0:
+        print("Streamflow preparation logs can be found here: {0}".format(prepare_log_directory))
+        
     run_log_directory = os.path.join(log_directory, "run")
     try:
         os.makedirs(run_log_directory)
     except OSError:
         pass
+    print("AutoRoute simulation logs can be found here: {0}".format(run_log_directory))
 
     #keep list of jobs
     autoroute_job_info = {
@@ -133,7 +143,6 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         master_watershed_autoroute_input_directory = os.path.join(autoroute_input_directory, directory)
         if os.path.isdir(master_watershed_autoroute_input_directory):
             autoroute_watershed_name = os.path.basename(autoroute_input_directory)
-            autoroute_job_name = "{0}-{1}"
             autoroute_job_name = "{0}-{1}".format(autoroute_watershed_name, directory)
             
             try:
@@ -165,11 +174,14 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                             rapid_output_file,
                                             date_peak_search_start,
                                             date_peak_search_end,
+                                            river_id,
+                                            streamflow_id,
+                                            stream_network_shapefile,
                                             autoroute_job_name,
-                                            prepare_log_directory
+                                            prepare_log_directory,
                                             ))
             
-            output_shapefile_base_name = '{0}_{1}'.format(autoroute_job_name, directory)
+            output_shapefile_base_name = '{0}_{1}'.format(autoroute_watershed_name, directory)
             #set up flood raster name
             output_flood_raster_name = 'flood_raster_{0}.tif'.format(output_shapefile_base_name)
             master_output_flood_raster_name = os.path.join(autoroute_output_directory, output_flood_raster_name)
@@ -218,7 +230,8 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                               output_shapefile_shp_name,
                                                               delete_flood_raster))
                 autoroute_job_info['htcondor_job_list'].append(job)
-                autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name })
+                autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name,
+                                                                 'autoroute_job_name': autoroute_job_name})
 
             else: #mode == "multiprocess":
             
@@ -230,8 +243,9 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                                     master_output_flood_raster_name,
                                                                     master_output_shapefile_shp_name,
                                                                     delete_flood_raster,
-                                                                    run_log_directory,
-                                                                    autoroute_job_name))
+                                                                    autoroute_job_name,
+                                                                    run_log_directory
+                                                                    ))
                 """
                 #For testing function serially
                 run_autoroute_multiprocess_worker((autoroute_executable_location,
@@ -239,16 +253,20 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                                    master_output_flood_raster_name,
                                                    master_output_shapefile_shp_name,
                                                    delete_flood_raster,
+                                                   autoroute_job_name,
                                                    run_log_directory))
                 """
     if PREPARE_MODE > 0:
         #generate streamflow
-        pool_streamflow.imap_unordered(prepare_autoroute_streamflow_multiprocess_worker,
-                                       streamflow_job_list,
-                                       chunksize=1)
+        streamflow_job_list = pool_streamflow.imap_unordered(prepare_autoroute_streamflow_multiprocess_worker,
+                                                             streamflow_job_list,
+                                                             chunksize=1)
+        for streamflow_job_output in streamflow_job_list:
+            print("STREAMFLOW READY: {0}".format(streamflow_job_output))
         pool_streamflow.close()
         pool_streamflow.join()
         
+    print("Running AutoRoute simulations ...")
     #submit jobs to run
     if mode == "multiprocess":
         autoroute_job_info['multiprocess_worker_list'] = pool_main.imap_unordered(run_autoroute_multiprocess_worker, 
@@ -262,15 +280,15 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         #wait for all of the jobs to complete
         if mode == "multiprocess":
             for multi_job_output in autoroute_job_info['multiprocess_worker_list']:
-                print("JOB FINISHED: {0}".format(multi_job_output[1]))
+                print("JOB FINISHED: {0}".format(multi_job_output[2]))
             #just in case ...
             pool_main.close()
             pool_main.join()
         else:
             for htcondor_job_index, htcondor_job in enumerate(autoroute_job_info['htcondor_job_list']):
                 htcondor_job.wait()
-                print("JOB FINISHED: {0}".format(autoroute_job_info['htcondor_job_info'][htcondor_job_index]['output_shapefile_base_name']))
+                print("JOB FINISHED: {0}".format(autoroute_job_info['htcondor_job_info'][htcondor_job_index]['autoroute_job_name']))
     
         print("Time to complete entire AutoRoute process: {0}".format(datetime.utcnow()-time_start_all))
-        
-    return autoroute_job_info
+    else:       
+        return autoroute_job_info
