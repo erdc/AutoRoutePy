@@ -57,7 +57,7 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
                                                                                                         return_period))
         
         if not return_period_file or not os.path.exists(return_period_file):
-            raise Exception("ERROR: AutoRoute watershed {} is missing return period file ...".format(autoroute_input_directory))
+            raise Exception("ERROR: AutoRoute watershed {0} is missing return period file ...".format(autoroute_input_directory))
 
         print("Running in mode {0}. Generating input from return period file ({1}) ...".format(PREPARE_MODE, return_period))
         
@@ -68,7 +68,7 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
 
         PREPARE_MODE = 3
         if not os.path.exists(rapid_output_file):
-            raise Exception("ERROR: AutoRoute watershed {} missing RAPID output file ...".format(autoroute_input_directory))
+            raise Exception("ERROR: AutoRoute watershed {0} missing RAPID output file ...".format(autoroute_input_directory))
 
         print("Running in mode {0}. Generating input from RAPID output file ({1}) ...".format(PREPARE_MODE, rapid_output_file))
         
@@ -161,10 +161,13 @@ def prepare_autoroute_single_folder(sub_folder,
     """
     Worker process for multiprocessing that manages one folders preparation
     """
-    print(sub_folder)
-    if sub_folder and os.path.exists(sub_folder) \
-    and autoroute_executable_location and os.path.exists(autoroute_executable_location) \
-    and stream_network_shapefile and os.path.exists(stream_network_shapefile):
+    if not sub_folder or not os.path.exists(sub_folder):
+        print("sub_folder path invalid. Skipping folder: {0}".format(sub_folder))
+    elif not autoroute_executable_location or not os.path.exists(autoroute_executable_location):
+        print("autoroute_executable_location path invalid. Skipping folder: {0}".format(sub_folder))
+    elif not stream_network_shapefile or not os.path.exists(stream_network_shapefile):
+        print("stream_network_shapefile path invalid. Skipping folder: {0}".format(sub_folder))
+    else:
     
         print("Running AutoRoute prepare for folder: {0}".format(sub_folder))
         os.chdir(sub_folder)
@@ -246,9 +249,6 @@ def prepare_autoroute_single_folder(sub_folder,
             os.remove(out_rasterized_streamfile)
         except OSError:
             pass
-
-    else:
-        print("Required files not found for preparing input. Skipping folder: {0}".format(sub_folder))
 
 
 def prepare_autoroute_multiprocess_worker(args):
