@@ -36,16 +36,17 @@ def run_autoroute_multiprocess_worker(args):
     """
     Run autoroute on one of multiple cores
     """
-    job_name = args[5]
-    log_directory = args[6]
+    job_name = args[7]
+    log_directory = args[8]
     log_file_path = os.path.join(log_directory, "{0}-{1}.log".format(job_name, datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
     with CaptureStdOutToLog(log_file_path):
         run_AutoRoute(autoroute_executable_location=args[0],
-                      autoroute_input_path=args[1],
-                      out_flood_map_raster_name=args[2],
-                      out_flood_depth_raster_name=args[3],
-                      out_shapefile_name=args[4],
-                      delete_flood_raster=args[5])
+                      autoroute_manager=args[1],
+                      autoroute_input_path=args[2],
+                      out_flood_map_raster_name=args[3],
+                      out_flood_depth_raster_name=args[4],
+                      out_shapefile_name=args[5],
+                      delete_flood_raster=args[6])
         
     return args[2], args[3], args[4], job_name
 
@@ -198,6 +199,7 @@ def run_autoroute_multiprocess(autoroute_input_directory, #path to AutoRoute inp
             output_shapefile_shp_name = '{0}.shp'.format(output_shapefile_base_name)
             master_output_shapefile_shp_name = os.path.join(autoroute_output_directory, output_shapefile_shp_name)
 
+            delete_flood_map_raster = False
             if not generate_flood_map_shapefile:
                 master_output_shapefile_shp_name = ""
             else:
@@ -282,15 +284,15 @@ def run_autoroute_multiprocess(autoroute_input_directory, #path to AutoRoute inp
                                                                     autoroute_job_name,
                                                                     run_log_directory
                                                                     ))
-                """
                 #For testing function serially
+                """
                 run_autoroute_multiprocess_worker((autoroute_executable_location,
                                                    autoroute_manager,
                                                    master_watershed_autoroute_input_directory,
                                                    master_output_flood_map_raster_name,
                                                    master_output_flood_depth_raster_name,
                                                    master_output_shapefile_shp_name,
-                                                   delete_flood_raster,
+                                                   delete_flood_map_raster,
                                                    autoroute_job_name,
                                                    run_log_directory))
                 """
@@ -330,3 +332,4 @@ def run_autoroute_multiprocess(autoroute_input_directory, #path to AutoRoute inp
         print("Time to complete entire AutoRoute process: {0}".format(datetime.utcnow()-time_start_all))
     else:       
         return autoroute_job_info
+

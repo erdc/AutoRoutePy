@@ -32,13 +32,16 @@ def run_AutoRoute(autoroute_executable_location,
     # prevent overwriting)
     os.chdir(autoroute_input_path)
     
+    if not autoroute_manager:
+        autoroute_manager = AutoRoute(autoroute_executable_location)
+
     #get the raster for elevation    
     try:
         elevation_raster = case_insensitive_file_search(autoroute_input_path, r'elevation\.(?:[^prj|xml])')
-    except Exception:
+    except IndexError:
         try:
             elevation_raster = case_insensitive_file_search(os.path.join(autoroute_input_path, 'elevation'), r'hdr\.adf')
-        except Exception:
+        except IndexError:
             print "Elevation raster not found. Skipping entire process ..."
             raise
         pass
@@ -46,7 +49,7 @@ def run_AutoRoute(autoroute_executable_location,
     #get the manning n raster
     try:
         manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?:[^prj|xml])')
-    except Exception:
+    except IndexError:
         manning_n_raster = ""
         print "Manning n raster not found. Ignoring this file ..."
         pass
@@ -54,15 +57,11 @@ def run_AutoRoute(autoroute_executable_location,
     #autoroute input file
     try:
         autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.TXT')
-    except Exception:
-        autoroute_input_file = ""
+        autoroute_manager.update_input_file(autoroute_input_file)
+    except IndexError:
         print "AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ..."
         pass
-    if not autoroute_manager:
-        autoroute_manager = AutoRoute(autoroute_executable_location)
 
-    if autoroute_input_file:
-        autoroute_manager.update_input_file(autoroute_input_file)
         
     autoroute_manager.update_parameters(dem_raster_file_path=elevation_raster,
                                         stream_info_file_path=case_insensitive_file_search(autoroute_input_path, r'stream_info\.txt'),
@@ -81,7 +80,6 @@ def run_AutoRoute(autoroute_executable_location,
         except OSError:
             pass
     
-
 def run_AutoRoute_HTCondor_directory(autoroute_executable_location,
                                      autoroute_manager,
                                      autoroute_input_directory,
