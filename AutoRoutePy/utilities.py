@@ -27,11 +27,13 @@ class CaptureStdOutToLog(object):
         self.out_file_path = out_file_path
     def __enter__(self):
         self._stdout = sys.stdout
-        sys.stdout = open(self.out_file_path, 'w')
+        self._stderr = sys.stderr
+        sys.stdout = sys.stderr = open(self.out_file_path, 'w')
         return self
     def __exit__(self, *args):
         sys.stdout.close()
         sys.stdout = self._stdout
+        sys.stderr = self._stderr
         
 def case_insensitive_file_search(directory, pattern):
     """
