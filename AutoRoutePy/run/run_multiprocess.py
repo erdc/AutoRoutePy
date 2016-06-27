@@ -42,19 +42,21 @@ def run_autoroute_multiprocess_worker(args):
     with CaptureStdOutToLog(log_file_path):
         run_AutoRoute(autoroute_executable_location=args[0],
                       autoroute_input_path=args[1],
-                      out_flood_raster_name=args[2],
-                      out_shapefile_name=args[3],
-                      delete_flood_raster=args[4])
+                      out_flood_map_raster_name=args[2],
+                      out_flood_depth_raster_name=args[3],
+                      out_shapefile_name=args[4],
+                      delete_flood_raster=args[5])
         
-    return args[2], args[3], job_name
+    return args[2], args[3], args[4], job_name
 
 #----------------------------------------------------------------------------------------
 # MAIN PROCESS
 #----------------------------------------------------------------------------------------
-def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoRoute executable
-                               autoroute_input_directory, #path to AutoRoute input directory
+def run_autoroute_multiprocess(autoroute_input_directory, #path to AutoRoute input directory
                                autoroute_output_directory, #path to AutoRoute output directory
                                log_directory, #path to HTCondor/multiprocessing logs
+                               autoroute_executable_location="", #location of AutoRoute executable
+                               autoroute_manager=None, #AutoRoute manager with default parameters
                                rapid_output_directory="", #path to ECMWF RAPID input/output directory
                                return_period="", # return period name in return period file
                                return_period_file="", # return period file generated from RAPID historical run
@@ -65,8 +67,9 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                                streamflow_id="", #field with streamflow
                                stream_network_shapefile="", #stream network shapefile
                                mode="multiprocess", #multiprocess or htcondor 
-                               delete_flood_raster=False, #delete flood raster generated
-                               generate_floodmap_shapefile=False, #generate a flood map shapefile
+                               generate_flood_map_raster=True, #generate flood raster
+                               generate_flood_depth_raster=False, #generate flood raster
+                               generate_flood_map_shapefile=False, #generate a flood map shapefile
                                wait_for_all_processes_to_finish=True, #waits for all processes to finish before ending script
                                num_cpus=-17 #number of processes to use on computer
                                ):
@@ -74,6 +77,9 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
     This it the main AutoRoute-RAPID process
     """
     time_start_all = datetime.utcnow()
+    if not generate_flood_depth_raster and not generate_flood_map_raster and not generate_flood_map_shapefile:
+        raise Exception("ERROR: Must set generate_flood_depth_raster, generate_flood_map_raster, or generate_flood_map_shapefile to True to proceed ...")
+        
     #--------------------------------------------------------------------------
     #Validate Inputs
     #--------------------------------------------------------------------------
@@ -183,18 +189,34 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
             
             output_shapefile_base_name = '{0}_{1}'.format(autoroute_watershed_name, directory)
             #set up flood raster name
-            output_flood_raster_name = 'flood_raster_{0}.tif'.format(output_shapefile_base_name)
-            master_output_flood_raster_name = os.path.join(autoroute_output_directory, output_flood_raster_name)
+            output_flood_map_raster_name = 'flood_map_raster_{0}.tif'.format(output_shapefile_base_name)
+            master_output_flood_map_raster_name = os.path.join(autoroute_output_directory, output_flood_map_raster_name)
+            #set up flood raster name
+            output_flood_depth_raster_name = 'flood_depth_raster_{0}.tif'.format(output_shapefile_base_name)
+            master_output_flood_depth_raster_name = os.path.join(autoroute_output_directory, output_flood_depth_raster_name)
             #set up flood shapefile name
             output_shapefile_shp_name = '{0}.shp'.format(output_shapefile_base_name)
             master_output_shapefile_shp_name = os.path.join(autoroute_output_directory, output_shapefile_shp_name)
+
+            if not generate_flood_map_shapefile:
+                master_output_shapefile_shp_name = ""
+            else:
+                if not generate_flood_map_raster:
+                    generate_flood_map_raster = True
+                    delete_flood_map_raster = True
+                
+            if not generate_flood_map_raster:
+                master_output_flood_map_raster_name = ""
+
+            if not generate_flood_depth_raster:
+                master_output_flood_depth_raster_name = ""
 
             if mode == "htcondor":
                 #create job to run autoroute for each raster in watershed
                 job = CJob('job_autoroute_{0}_{1}'.format(os.path.basename(autoroute_input_directory), directory), tmplt.vanilla_transfer_files)
                 
 
-                if generate_floodmap_shapefile:
+                if generate_flood_map_shapefile:
                     #setup additional floodmap shapfile names
                     output_shapefile_shx_name = '{0}.shx'.format(output_shapefile_base_name)
                     master_output_shapefile_shx_name = os.path.join(autoroute_output_directory, output_shapefile_shx_name)
@@ -202,55 +224,71 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
                     master_output_shapefile_prj_name = os.path.join(autoroute_output_directory, output_shapefile_prj_name)
                     output_shapefile_dbf_name = '{0}.dbf'.format(output_shapefile_base_name)
                     master_output_shapefile_dbf_name = os.path.join(autoroute_output_directory, output_shapefile_dbf_name)
-
-                    job.set('transfer_output_remaps',"\"{0} = {1}; {2} = {3}; {4} = {5};" \
-                                                     "  {6} = {7}; {8} = {9}\"".format(output_shapefile_shp_name, 
-                                                                                       master_output_shapefile_shp_name,
-                                                                                       output_shapefile_shx_name,
-                                                                                       master_output_shapefile_shx_name,
-                                                                                       output_shapefile_prj_name,
-                                                                                       master_output_shapefile_prj_name,
-                                                                                       output_shapefile_dbf_name,
-                                                                                       master_output_shapefile_dbf_name,
-                                                                                       output_flood_raster_name,
-                                                                                       master_output_flood_raster_name))
                 
+                    transfer_output_remaps = "{0} = {1}; {2} = {3}; {4} = {5};" \
+                                             " {6} = {7}; {8} = {9}".format(output_shapefile_shp_name, 
+                                                                            master_output_shapefile_shp_name,
+                                                                            output_shapefile_shx_name,
+                                                                            master_output_shapefile_shx_name,
+                                                                            output_shapefile_prj_name,
+                                                                            master_output_shapefile_prj_name,
+                                                                            output_shapefile_dbf_name,
+                                                                            master_output_shapefile_dbf_name,
+                                                                            output_flood_map_raster_name,
+                                                                            master_output_flood_map_raster_name)
+                    
+                    if generate_flood_depth_raster:
+                        transfer_output_remaps += "; {0} = {1}".format(output_flood_depth_raster_name, 
+                                                                       master_output_flood_depth_raster_name)
                 else:
                     output_shapefile_shp_name = ""
-                    job.set('transfer_output_remaps',"\"{0} = (1)\"" .format(output_flood_raster_name,
-                                                                             master_output_flood_raster_name))
+                    transfer_output_remaps = ""
+                    if generate_flood_map_raster:
+                        transfer_output_remaps = "{0} = {1}".format(output_flood_map_raster_name, 
+                                                                    master_output_flood_map_raster_name)
+                    if generate_flood_depth_raster:
+                        if transfer_output_remaps:
+                            transfer_output_remaps += "; "
+                            
+                        transfer_output_remaps += "{0} = {1}".format(output_flood_depth_raster_name, 
+                                                                     master_output_flood_depth_raster_name)
+                                                                     
+                job.set('transfer_output_remaps',"\"{0}\"" .format(transfer_output_remaps))
                                                                       
                 job.set('executable', os.path.join(local_scripts_location,'multicore_worker_process.py'))
                 job.set('transfer_input_files', "{0}".format(master_watershed_autoroute_input_directory))
                 job.set('initialdir', run_log_directory)
                     
-                job.set('arguments', '{0} {1} {2} {3} {4}' % (autoroute_executable_location,
-                                                              directory,
-                                                              output_flood_raster_name,
-                                                              output_shapefile_shp_name,
-                                                              delete_flood_raster))
+                job.set('arguments', '{0} {1} {2} {3} {4} {5} {6}' % (autoroute_executable_location,
+                                                                      autoroute_manager,
+                                                                      directory,
+                                                                      output_flood_map_raster_name,
+                                                                      output_flood_depth_raster_name,
+                                                                      output_shapefile_shp_name,
+                                                                      delete_flood_map_raster))
+                                                              
                 autoroute_job_info['htcondor_job_list'].append(job)
                 autoroute_job_info['htcondor_job_info'].append({ 'output_shapefile_base_name': output_shapefile_base_name,
                                                                  'autoroute_job_name': autoroute_job_name})
 
             else: #mode == "multiprocess":
-            
-                if not generate_floodmap_shapefile:
-                    master_output_shapefile_shp_name = ""
-
                 autoroute_job_info['multiprocess_job_list'].append((autoroute_executable_location,
+                                                                    autoroute_manager,
                                                                     master_watershed_autoroute_input_directory,
-                                                                    master_output_flood_raster_name,
+                                                                    master_output_flood_map_raster_name,
+                                                                    master_output_flood_depth_raster_name,
                                                                     master_output_shapefile_shp_name,
-                                                                    delete_flood_raster,
+                                                                    delete_flood_map_raster,
                                                                     autoroute_job_name,
                                                                     run_log_directory
                                                                     ))
                 """
                 #For testing function serially
                 run_autoroute_multiprocess_worker((autoroute_executable_location,
+                                                   autoroute_manager,
                                                    master_watershed_autoroute_input_directory,
-                                                   master_output_flood_raster_name,
+                                                   master_output_flood_map_raster_name,
+                                                   master_output_flood_depth_raster_name,
                                                    master_output_shapefile_shp_name,
                                                    delete_flood_raster,
                                                    autoroute_job_name,
@@ -280,7 +318,7 @@ def run_autoroute_multiprocess(autoroute_executable_location, #location of AutoR
         #wait for all of the jobs to complete
         if mode == "multiprocess":
             for multi_job_output in autoroute_job_info['multiprocess_worker_list']:
-                print("JOB FINISHED: {0}".format(multi_job_output[2]))
+                print("JOB FINISHED: {0}".format(multi_job_output[3]))
             #just in case ...
             pool_main.close()
             pool_main.join()

@@ -35,7 +35,6 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                               rapid_io_files_location, #path to RAPID input/output directory
                               log_directory,
                               return_period_list=['return_period_20', 'return_period_10', 'return_period_2'],
-                              delete_flood_raster=False,
                               generate_floodmap_shapefile=False,
                               geoserver_url='',
                               geoserver_username='',
@@ -96,7 +95,6 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                                                                                              return_period=return_period, 
                                                                                              return_period_file=return_period_file, 
                                                                                              mode="multiprocess", 
-                                                                                             delete_flood_raster=delete_flood_raster, 
                                                                                              generate_floodmap_shapefile=generate_floodmap_shapefile,
                                                                                              wait_for_all_processes_to_finish=False,
                                                                                              num_cpus=num_cpus
@@ -129,7 +127,7 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
         upload_shapefile_list = []
         for job_index, job_output in enumerate(autoroute_watershed_job['multiprocess_worker_list']):
             #upload to GeoServer
-            if geoserver_manager and job_output[1]:
+            if geoserver_manager and job_output[2]:
                 #time stamped layer name
                 geoserver_resource_name = "%s-%s" % (geoserver_layer_group_name,
                                                      job_index)
@@ -139,7 +137,7 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                 #rename files
                 rename_shapefiles(master_watershed_autoroute_output_directory, 
                                   os.path.splitext(upload_shapefile)[0], 
-                                  os.path.splitext(os.path.basename(job_output[1]))[0])
+                                  os.path.splitext(os.path.basename(job_output[2]))[0])
                                   
                 if os.path.exists(upload_shapefile):
                     upload_shapefile_list.append(upload_shapefile)
