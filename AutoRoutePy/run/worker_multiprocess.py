@@ -35,9 +35,11 @@ def run_AutoRoute(autoroute_executable_location,
     if not autoroute_manager:
         autoroute_manager = AutoRoute(autoroute_executable_location)
 
+    valid_raster_extensions = "asc|bmp|dt2|img|jp2|j2c|j2k|jpeg|jpg2|jpg|png|tif|tiff"
+    
     #get the raster for elevation    
     try:
-        elevation_raster = case_insensitive_file_search(autoroute_input_path, r'elevation\.(?:[^prj|xml])')
+        elevation_raster = case_insensitive_file_search(autoroute_input_path, r'elevation\.(?:{})'.format(valid_raster_extensions))
     except IndexError:
         try:
             elevation_raster = case_insensitive_file_search(os.path.join(autoroute_input_path, 'elevation'), r'hdr\.adf')
@@ -48,7 +50,7 @@ def run_AutoRoute(autoroute_executable_location,
 
     #get the manning n raster
     try:
-        manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?:[^prj|xml])')
+        manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?:{})'.format(valid_raster_extensions))
     except IndexError:
         manning_n_raster = ""
         print "Manning n raster not found. Ignoring this file ..."
