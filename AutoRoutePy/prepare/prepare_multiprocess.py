@@ -179,8 +179,8 @@ def prepare_autoroute_single_folder(sub_folder,
         original_elevation_dem_file = glob(os.path.join(sub_folder, '*.{0}'.format(dem_extension)))[0]
 
         elevation_dem_file = os.path.join(sub_folder, 'elevation.{0}'.format(dem_extension))
-        for assocated_dem_file in glob("{}*".format(os.path.splitext(original_elevation_dem_file)[0])):
-            renamed_file = os.path.join(sub_folder, 'elevation{0}'.format(os.path.splitext(assocated_dem_file)[1]))
+        for assocated_dem_file in glob("{}*".format(original_elevation_dem_file.split(".")[0])):
+            renamed_file = os.path.join(sub_folder, 'elevation.{0}'.format(".".join(assocated_dem_file.split(".")[1:])))
             os.rename(assocated_dem_file, renamed_file)
         
         #----------------------------------------------------------------------
@@ -249,7 +249,6 @@ def prepare_autoroute_single_folder(sub_folder,
             os.remove(out_rasterized_streamfile)
         except OSError:
             pass
-
 
 def prepare_autoroute_multiprocess_worker(args):
     """
