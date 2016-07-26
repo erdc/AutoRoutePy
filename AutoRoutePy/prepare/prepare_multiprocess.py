@@ -81,7 +81,7 @@ def get_valid_streamflow_prepare_mode(autoroute_input_directory,
         if not os.path.exists(stream_network_shapefile):
             raise Exception("ERROR: AutoRoute watershed {} missing stream network shapefile ...".format(autoroute_input_directory))
 
-        print("Running in mode {0}. Generating input from stream network shapefile ({1}) ...".format(PREPARE_MODE, rapid_output_file))
+        print("Running in mode {0}. Generating input from stream network shapefile ({1}) ...".format(PREPARE_MODE, stream_network_shapefile))
 
     return PREPARE_MODE
     
