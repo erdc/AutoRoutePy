@@ -1,41 +1,45 @@
 #Author:
 #Alan D. Snow, 2016
 
-language: python
-python:
-  - "2.7"
+language: c
+os:
+  - linux
+  - osx
+env:
+  - TRAVIS_PYTHON_VERSION="2.7"
+  - TRAVIS_PYTHON_VERSION="3.5"
+matrix:
+  fast_finish: true
+  allow_failures:
+    - os: osx
+    - env: TRAVIS_PYTHON_VERSION="3.5"
+notifications:
+  email: false
+  
 #*******************************************************************************
 #Before installing AutoRoutePy
 #*******************************************************************************
-
 before_install:
-- sudo apt-get update -qq
-- sudo apt-get install -y g++ python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev libssl-dev libffi-dev libproj-dev
-
-
 #-------------------------------------------------------------------------------
-#Creating directory for installation of gdal
-#-------------------------------------------------------------------------------
-- cd $TRAVIS_BUILD_DIR
-- mkdir ../installz
-- cd ../installz
-- export INSTALLZ_DIR=$PWD
-
-#-------------------------------------------------------------------------------
-#Installing gdal 2.0.2
-#-------------------------------------------------------------------------------
-- cd $INSTALLZ_DIR
-- mkdir gdal_install
-- export GDAL_INSTALL_DIR=$INSTALLZ_DIR/gdal_install
-- wget "http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz"
-- tar -xzf gdal-2.0.2.tar.gz
-- cd gdal-2.0.2
-- ./configure --with-python --prefix=$GDAL_INSTALL_DIR
-- make
-- make install
-- export PATH=$GDAL_INSTALL_DIR/bin:$PATH
-- export LD_LIBRARY_PATH=$GDAL_INSTALL_DIR/lib:$PATH
-- export GDAL_DATA=$GDAL_INSTALL_DIR/share/gdal
+#Add miniconda - based on https://gist.github.com/dan-blanchard/7045057
+#-----------------------------------------------------------------------------
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-MacOSX-x86_64.sh;
+  fi
+- chmod +x miniconda.sh
+- ./miniconda.sh -b -p $HOME/miniconda
+- export PATH=$HOME/miniconda/bin:$PATH
+- conda update --yes conda python
+#create environment in conda
+- conda create --yes --name autoroute python=$TRAVIS_PYTHON_VERSION
+- source activate autoroute
+#-----------------------------------------------------------------------------
+# Install required python packages
+#-----------------------------------------------------------------------------
+- conda install --yes -c conda-forge nose numpy pandas scipy netcdf4 gdal shapely pyproj rtree
 
 #*******************************************************************************
 #Installing AutoRoutePy
