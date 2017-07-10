@@ -39,7 +39,7 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes -c conda-forge nose numpy pandas scipy netcdf4 gdal shapely pyproj rtree
+- conda install --yes -c conda-forge nose rapidpy
 
 #*******************************************************************************
 #Installing AutoRoutePy
