@@ -25,7 +25,6 @@ def test_rasterize_stream_shapefile():
     original_data_path = os.path.join(main_tests_folder, 'original')
     output_data_path = os.path.join(main_tests_folder, 'output')
 
-    print "TEST 1: RASTERIZE STREAM SHAPEFILE"
     arp = AutoRoutePrepare("autoroute_exe_path_dummy",
                            os.path.join(original_data_path, 'elevation.asc'),
                            "dummy_stream_info_path",
@@ -47,7 +46,6 @@ def test_rasterize_stream_shapefile():
         rows = streamid_raster_band.YSize
         return streamid_raster_band.ReadAsArray(0, 0, cols, rows)
         
-    print "TESTING RASTER DATA ..."
     npt.assert_almost_equal(get_raster_data_array(original_rasterized_streamfile),
                             get_raster_data_array(out_rasterized_streamfile))
 
@@ -55,6 +53,7 @@ def test_rasterize_stream_shapefile():
         os.remove(out_rasterized_streamfile)
     except OSError:
         pass
+
 
 def test_append_slope_to_stream_info_file():
     """
@@ -69,7 +68,6 @@ def test_append_slope_to_stream_info_file():
     stream_info_file = os.path.join(output_data_path, 'stream_info.txt')
     copy(original_stream_info_file, stream_info_file)
     
-    print "TEST 2: TEST ADDING SLOPE TO STREAM INFO FILE"
     arp = AutoRoutePrepare("autoroute_exe_path_dummy",
                            os.path.join(original_data_path, 'elevation.asc'),
                            stream_info_file,

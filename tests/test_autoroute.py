@@ -22,7 +22,6 @@ def test_generate_autoroute_input_file_invalid():
     
     ouptut_data_path = os.path.join(main_tests_folder, 'output')
 
-    print "TEST 1: GENERATE INPUT FILE WITH INVALID INPUTS"
     auto_mng_gen = AutoRoute("autoroute_exe_path_dummy",
                              stream_info_file_path="stream_info.txt",
                              dem_raster_file_path="elevation.tif",
@@ -52,7 +51,6 @@ def test_generate_autoroute_input_file():
     original_data_path = os.path.join(main_tests_folder, 'original')
     ouptut_data_path = os.path.join(main_tests_folder, 'output')
 
-    print "TEST 2: GENERATE INPUT FILE"
     auto_mng_gen = AutoRoute("autoroute_exe_path_dummy",
                              stream_info_file_path="stream_info.txt",
                              dem_raster_file_path="elevation.tif",
@@ -87,7 +85,6 @@ def test_update_autoroute_input_file_invalid():
     original_data_path = os.path.join(main_tests_folder, 'original')
     output_data_path = os.path.join(main_tests_folder, 'output')
 
-    print "TEST 3: UPDATE INPUT FILE WITH FAKE INPUTS"
     auto_mng_fake = AutoRoute("autoroute_exe_path_dummy",
                              stream_file=os.path.join(original_data_path, "streamflow_raster.tif"),
                              dem_file=os.path.join(output_data_path, "elevation.tif"),
@@ -115,7 +112,6 @@ def test_update_autoroute_input_file():
     original_data_path = os.path.join(main_tests_folder, 'original')
     output_data_path = os.path.join(main_tests_folder, 'output')
 
-    print "TEST 4: UPDATE VARIABLES IN FILE"
     auto_mng_var = AutoRoute("autoroute_exe_path_dummy",
                              stream_info_file_path="stream_info.txt",
                              dem_raster_file_path="elevation.tif",
