@@ -1,3 +1,0 @@
-[submodule "AutoRoutePy/run/spt_dataset_manager"]
-	path = AutoRoutePy/run/spt_dataset_manager
-	url = https://github.com/erdc-cm/spt_dataset_manager

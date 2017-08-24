@@ -17,8 +17,8 @@ try:
     from condorpy import Templates as tmplt
     HTCONDOR_ENABLED = True
 except ImportError:
-    print "condorpy unable to be imported. If you would like to use HTCondor", \
-          "mode, please install condorpy (i.e. pip install condorpy)."
+    print("condorpy unable to be imported. If you would like to use HTCondor"
+          "mode, please install condorpy (i.e. pip install condorpy).")
     pass
 
 #local imports

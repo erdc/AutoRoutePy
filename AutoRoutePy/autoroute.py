@@ -64,7 +64,6 @@ class AutoRoute(object):
         """
         Generate AUTOROUTE_INPUT_FILE.txt file
         """
-        print "Generating AutoRoute input file ..."
         try:
             os.remove(file_path)
         except OSError:
@@ -82,7 +81,6 @@ class AutoRoute(object):
         Update existing input file with new parameters
         """
         if os.path.exists(file_path) and file_path:
-            print "Adding missing inputs from AutoRoute input file ..."
             old_file = open(file_path, 'r')
             for line in old_file:
                 line = line.strip()
@@ -100,7 +98,7 @@ class AutoRoute(object):
                     if not getattr(self, attr):
                         setattr(self, attr, value)
                 else:
-                    print "Invalid argument" , attr, ". Skipping ..."
+                    print("Invalid argument" + attr + ". Skipping ...")
             old_file.close()
             
             self.generate_input_file(file_path)
@@ -124,16 +122,16 @@ class AutoRoute(object):
             self.update_input_file(autoroute_input_file)
 
         #run AutoRoute
-        print "Running AutoRoute ..."
+        print("Running AutoRoute ...")
         process = Popen([self._autoroute_executable_location, autoroute_input_file], 
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
-            print err
+            print(err)
             raise
         else:
-            print 'AutoRoute output:'
+            print('AutoRoute output:')
             for line in out.split('\n'):
-                print line
+                print(line)
 
-        print "Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start)
+        print("Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start))

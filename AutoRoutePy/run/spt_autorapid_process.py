@@ -60,7 +60,7 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
     autoroute_input_directories = get_valid_watershed_list(autoroute_input_folder)
 
     for return_period in return_period_list:
-        print "Running AutoRoute process for:", return_period
+        print("Running AutoRoute process for:", return_period)
         #run autorapid for each watershed
         autoroute_watershed_jobs = {}
         for autoroute_input_directory in autoroute_input_directories:
@@ -70,12 +70,12 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
             master_watershed_rapid_input_directory = os.path.join(rapid_io_files_location, "input", autoroute_input_directory)
                                                                    
             if not os.path.exists(master_watershed_rapid_input_directory):
-                print "AutoRoute watershed", autoroute_input_directory, "not in RAPID IO folder. Skipping ..."
+                print("AutoRoute watershed", autoroute_input_directory, "not in RAPID IO folder. Skipping ...")
                 continue
             try:
                 return_period_file=case_insensitive_file_search(master_watershed_rapid_input_directory, r'return_period.*?\.nc')
             except Exception:
-                print "AutoRoute watershed", autoroute_input_directory, "missing return period file. Skipping ..."
+                print("AutoRoute watershed", autoroute_input_directory, "missing return period file. Skipping ...")
                 continue
             
             #setup the output location
@@ -108,12 +108,12 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                                                         geoserver_password, 
                                                         app_instance_id)
         except Exception as ex:
-            print ex
-            print "Skipping geoserver upload ..."
+            print(ex)
+            print("Skipping geoserver upload ...")
             geoserver_manager = None
             pass
     else:
-        print "GeoServer parameters incomplete. Skipping upload ..."
+        print("GeoServer parameters incomplete. Skipping upload ...")
         
     #wait for jobs to finish by watershed
     for autoroute_watershed_directory, autoroute_watershed_job in autoroute_watershed_jobs.iteritems():
@@ -141,7 +141,7 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                                   
                 if os.path.exists(upload_shapefile):
                     upload_shapefile_list.append(upload_shapefile)
-                    print "Uploading", upload_shapefile, "to GeoServer as", geoserver_resource_name
+                    print("Uploading", upload_shapefile, "to GeoServer as", geoserver_resource_name)
                     shapefile_basename = os.path.splitext(upload_shapefile)[0]
                     #remove past layer if exists
                     #geoserver_manager.purge_remove_geoserver_layer(geoserver_manager.get_layer_name(geoserver_resource_name))
@@ -173,17 +173,17 @@ def run_spt_autorapid_process(autoroute_executable_location, #location of AutoRo
                         geoserver_manager.upload_shapefile(geoserver_resource_name, 
                                                            shapefile_list)
                     except geo_cat_FailedRequestError as ex:
-                        print ex
-                        print "Most likely OK, but always wise to check ..."
+                        print(ex)
+                        print("Most likely OK, but always wise to check ...")
                         pass
                                                        
                     geoserver_resource_list.append(geoserver_manager.get_layer_name(geoserver_resource_name))
                     #TODO: Upload to CKAN for history of predicted floodmaps?
                 else:
-                    print upload_shapefile, "not found. Skipping upload to GeoServer ..."
+                    print(upload_shapefile, "not found. Skipping upload to GeoServer ...")
         
         if geoserver_manager and geoserver_resource_list:
-            print "Creating Layer Group:", geoserver_layer_group_name
+            print("Creating Layer Group:", geoserver_layer_group_name)
             style_list = ['green' for i in range(len(geoserver_resource_list))]
             bounds = get_shapefile_layergroup_bounds(upload_shapefile_list)
             geoserver_manager.dataset_engine.create_layer_group(layer_group_id=geoserver_manager.get_layer_name(geoserver_layer_group_name), 

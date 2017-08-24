@@ -41,7 +41,6 @@ def GetExtent(gt,cols,rows):
             x=gt[0]+(px*gt[1])+(py*gt[2])
             y=gt[3]+(px*gt[4])+(py*gt[5])
             ext.append([x,y])
-            #print x,y
         yarr.reverse()
     return ext
 
@@ -109,7 +108,7 @@ class AutoRoutePrepare(object):
         """
         Convert stream shapefile to raster with stream ids/slope
         """
-        print "Converting stream shapefile to raster ..."
+        print("Converting stream shapefile to raster ...")
         # Open the data source
         stream_shapefile = ogr.Open(self.stream_shapefile_path)
         source_layer = stream_shapefile.GetLayer(0)
@@ -127,7 +126,7 @@ class AutoRoutePrepare(object):
         
         #get extent from elevation raster to filter data
         try:
-            print "Attempting to filter ..."
+            print("Attempting to filter ...")
             elevation_raster = gdal.Open(self.elevation_dem_path)
 
             gt=elevation_raster.GetGeoTransform()
@@ -146,8 +145,8 @@ class AutoRoutePrepare(object):
             wkt = "POLYGON (({0},{1}))".format(",".join(string_rast_ext), string_rast_ext[0])
             stream_shp_layer.SetSpatialFilter(ogr.CreateGeometryFromWkt(wkt))
         except Exception as ex:
-            print ex
-            print "Skipping filter. This may take longer ..."
+            print(ex)
+            print("Skipping filter. This may take longer ...")
             pass
 
     def generate_stream_info_file_with_direction(self, stream_raster_file_name,
@@ -160,7 +159,7 @@ class AutoRoutePrepare(object):
                         
 
         #run AutoRoute
-        print "Running AutoRoute prepare ..."
+        print("Running AutoRoute prepare ...")
         process = Popen([self.autoroute_executable_location,
                          stream_raster_file_name,
                          self.stream_info_file,
@@ -168,14 +167,13 @@ class AutoRoutePrepare(object):
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
-            print err
-            raise
+            raise Exception(err)
         else:
-            print 'AutoRoute output:'
+            print('AutoRoute output:')
             for line in out.split('\n'):
-                print line
+                print(line)
 
-        print "Time to run: %s" % (datetime.datetime.utcnow()-time_start)
+        print("Time to run: %s" % (datetime.datetime.utcnow()-time_start))
 
 
     def generate_manning_n_raster(self, land_use_raster,
@@ -190,7 +188,7 @@ class AutoRoutePrepare(object):
                         
 
         #run AutoRoute
-        print "Running AutoRoute prepare ..."
+        print("Running AutoRoute prepare ...")
         process = Popen([self.autoroute_executable_location,
                          land_use_raster,
                          self.elevation_dem_path,
@@ -200,14 +198,13 @@ class AutoRoutePrepare(object):
                         stdout=PIPE, stderr=PIPE, shell=False)
         out, err = process.communicate()
         if err:
-            print err
-            raise
+            raise Exception(err)
         else:
-            print 'AutoRoute output:'
+            print('AutoRoute output:')
             for line in out.split('\n'):
-                print line
+                print(line)
 
-        print "Time to run: %s" % (datetime.datetime.utcnow()-time_start)
+        print("Time to run: %s" % (datetime.datetime.utcnow()-time_start))
 
     def append_slope_to_stream_info_file(self, stream_id_field="COMID", slope_field="slope"):
         """
@@ -218,7 +215,7 @@ class AutoRoutePrepare(object):
 
         self.spatially_filter_streamfile_layer_by_elevation_dem(stream_shp_layer)
 
-        print "Writing output to file ..."
+        print("Writing output to file ...")
         stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
@@ -248,7 +245,7 @@ class AutoRoutePrepare(object):
         method_y = the second axis - it calculates the max, min, mean, mean_plus_std, mean_minus_std value from method_x
         """
      
-        print "Generating Streamflow Raster ..."
+        print("Generating Streamflow Raster ...")
         #get list of streamidS
         stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
 
@@ -264,7 +261,7 @@ class AutoRoutePrepare(object):
                                   reverse=True)
      
      
-        print "Finding streamid indices ..."
+        print("Finding streamid indices ...")
         with RAPIDDataset(prediction_files[0]) as data_nc:
             reordered_streamid_index_list = data_nc.get_subset_riverid_index_list(streamid_list_unique)[0]
 
@@ -275,7 +272,7 @@ class AutoRoutePrepare(object):
                 #run at full resolution for all
                 first_half_size = 65
         
-        print "Extracting Data ..."
+        print("Extracting Data ...")
         reach_prediciton_array_first_half = np.zeros((len(streamid_list_unique),len(prediction_files),first_half_size))
         reach_prediciton_array_second_half = np.zeros((len(streamid_list_unique),len(prediction_files),20))
         #get information from datasets
@@ -314,10 +311,10 @@ class AutoRoutePrepare(object):
                                     reach_prediciton_array_first_half[comid_index][file_index] = data_values_2d_array[comid_index][:]
                                 
             except Exception as e:
-                print e
+                print(e)
                 #pass
      
-        print "Analyzing data and writing output ..."
+        print("Analyzing data and writing output ...")
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
@@ -394,7 +391,7 @@ class AutoRoutePrepare(object):
         Generate StreamFlow raster
         Create AutoRAPID INPUT from single RAPID output
         """
-        print "Appending streamflow for:", self.stream_info_file
+        print("Appending streamflow for:", self.stream_info_file)
         #get information from datasets
         #get list of streamids
         stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
@@ -403,7 +400,7 @@ class AutoRoutePrepare(object):
         streamid_list_unique = np.unique(streamid_list_full)
         
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
-        print "Analyzing data and appending to list ..."
+        print("Analyzing data and appending to list ...")
         with open(temp_stream_info_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
@@ -428,17 +425,17 @@ class AutoRoutePrepare(object):
                 step_size = min(max_chunk_size/time_length, streamid_list_length)
                 for list_index_start in xrange(0, streamid_list_length, step_size):
                     list_index_end = min(list_index_start+step_size, streamid_list_length)
-                    print "River ID subset range {0} to {1} of {2} ...".format(list_index_start,
+                    print("River ID subset range {0} to {1} of {2} ...".format(list_index_start,
                                                                                list_index_end,
-                                                                               streamid_list_length)
-                    print "Extracting data ..."
+                                                                               streamid_list_length))
+                    print("Extracting data ...")
                     valid_stream_indices, valid_stream_ids, missing_stream_ids = \
                         data_nc.get_subset_riverid_index_list(streamid_list_unique[list_index_start:list_index_end])
                         
                     streamflow_array = data_nc.get_qout_index(valid_stream_indices,
                                                               time_index_array=time_range)
                     
-                    print "Calculating peakflow and writing to file ..."
+                    print("Calculating peakflow and writing to file ...")
                     for streamid_index, streamid in enumerate(valid_stream_ids):
                         #get where streamids are in the lookup grid id table
                         peak_flow = max(streamflow_array[streamid_index])
@@ -457,7 +454,7 @@ class AutoRoutePrepare(object):
         os.remove(self.stream_info_file)
         os.rename(temp_stream_info_file, self.stream_info_file)
 
-        print "Appending streamflow complete for:", self.stream_info_file
+        print("Appending streamflow complete for:", self.stream_info_file)
 
 
     def append_streamflow_from_return_period_file(self, return_period_file, 
@@ -465,7 +462,7 @@ class AutoRoutePrepare(object):
         """
         Generates return period raster from return period file
         """
-        print "Extracting Return Period Data ..."
+        print("Extracting Return Period Data ...")
         return_period_nc = Dataset(return_period_file, mode="r")
         if return_period == "return_period_20": 
             return_period_data = return_period_nc.variables['return_period_20'][:]
@@ -487,7 +484,7 @@ class AutoRoutePrepare(object):
         stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         streamid_list_full = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         streamid_list_unique = np.unique(streamid_list_full)
-        print "Analyzing data and appending to list ..."
+        print("Analyzing data and appending to list ...")
         
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         with open(temp_stream_info_file, 'wb') as outfile:
@@ -499,7 +496,7 @@ class AutoRoutePrepare(object):
                     streamid_index = np.where(return_period_comids==streamid)[0][0]
                     peak_flow = return_period_data[streamid_index]
                 except IndexError:
-                    print "ReachID", streamid, "not found in netCDF dataset. Setting value to zero ..."
+                    print( "ReachID", streamid, "not found in netCDF dataset. Setting value to zero ...")
                     peak_flow = 0
                     pass
                     
@@ -520,7 +517,7 @@ class AutoRoutePrepare(object):
 
         self.spatially_filter_streamfile_layer_by_elevation_dem(stream_shp_layer)
 
-        print "Writing output to file ..."
+        print("Writing output to file ...")
         stream_info_table = csv_to_list(self.stream_info_file, ", ")[1:]
         #Columns: DEM_1D_Index Row Col StreamID StreamDirection
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)

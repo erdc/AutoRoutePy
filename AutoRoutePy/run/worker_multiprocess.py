@@ -44,7 +44,7 @@ def run_AutoRoute(autoroute_executable_location,
         try:
             elevation_raster = case_insensitive_file_search(os.path.join(autoroute_input_path, 'elevation'), r'hdr\.adf')
         except IndexError:
-            print "Elevation raster not found. Skipping entire process ..."
+            print("Elevation raster not found. Skipping entire process ...")
             raise
         pass
 
@@ -53,7 +53,7 @@ def run_AutoRoute(autoroute_executable_location,
         manning_n_raster = case_insensitive_file_search(autoroute_input_path, r'manning_n\.(?:{})'.format(valid_raster_extensions))
     except IndexError:
         manning_n_raster = ""
-        print "Manning n raster not found. Ignoring this file ..."
+        print("Manning n raster not found. Ignoring this file ...")
         pass
 
     #autoroute input file
@@ -61,7 +61,7 @@ def run_AutoRoute(autoroute_executable_location,
         autoroute_input_file = case_insensitive_file_search(autoroute_input_path, r'AUTOROUTE_INPUT_FILE\.TXT')
         autoroute_manager.update_input_file(autoroute_input_file)
     except IndexError:
-        print "AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ..."
+        print("AUTOROUTE_INPUT_FILE.txt not found. Ignoring this file ...")
         pass
 
         

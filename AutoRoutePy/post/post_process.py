@@ -21,7 +21,7 @@ def merge_shapefiles(directory, out_shapefile_name, reproject=False, remove_old=
     Merges all shapefiles in a directory
     Options to reproject and remove old files
     """
-    print "Merging Shapefiles ..."
+    print("Merging Shapefiles ...")
     fileList = glob(os.path.join(directory, "*.shp"))
     if fileList:
         out_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
@@ -71,14 +71,14 @@ def merge_shapefiles(directory, out_shapefile_name, reproject=False, remove_old=
         #close the output shapefile
         out_ds.Destroy()
     else:
-        print "No files found to merge ..."
+        print("No files found to merge ...")
                 
 def rename_shapefiles(directory, out_shapefile_basename, startswith):
     """
     Renames all shapefiles in a directory
     """
 
-    print "Renaming Shapefiles ..."
+    print("Renaming Shapefiles ...")
     fileList = glob(os.path.join(directory, "%s*" % startswith))
     for file_name in fileList:
         extension = os.path.splitext(file_name)[1]

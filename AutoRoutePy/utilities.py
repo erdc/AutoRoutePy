@@ -15,8 +15,8 @@ import sys
 try:
     from psutil import virtual_memory
 except ImportError:
-    print "psutil unable to be imported. If you would like to use multiprocessing", \
-          "mode, please install psutil (i.e. pip install psutil)."
+    print("psutil unable to be imported. If you would like to use multiprocessing"
+          "mode, please install psutil (i.e. pip install psutil).")
     pass
 
 #----------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ def case_insensitive_file_search(directory, pattern):
                             [filename for filename in os.listdir(directory) \
                              if re.search(pattern, filename, re.IGNORECASE)][0])
     except IndexError:
-        print pattern, "not found"
+        print(pattern, "not found")
         raise
 
 def get_valid_watershed_list(input_directory):
@@ -57,7 +57,7 @@ def get_valid_watershed_list(input_directory):
             and len(directory.split("-")) == 2:
             valid_input_directories.append(directory)
         else:
-            print directory, "incorrectly formatted. Skipping ..."
+            print(directory, "incorrectly formatted. Skipping ...")
     return valid_input_directories
 
 def get_watershed_subbasin_from_folder(folder_name):
