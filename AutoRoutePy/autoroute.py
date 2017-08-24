@@ -53,7 +53,7 @@ class AutoRoute(object):
         Update AutoRoute parameters
         """
         #set arguments based off of user input
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             key = key.lower()
             if key in dir(self) and not key.startswith('_'):
                 setattr(self, key, value)
@@ -70,7 +70,7 @@ class AutoRoute(object):
             pass
         
         new_file = open(file_path,'w')
-        for attr, value in self.__dict__.iteritems():
+        for attr, value in self.__dict__.items():
             if not attr.startswith('_') and value:
                 new_file.write("%s %s\n" % (attr, value))
     
@@ -131,7 +131,7 @@ class AutoRoute(object):
             raise
         else:
             print('AutoRoute output:')
-            for line in out.split('\n'):
+            for line in out.split(b'\n'):
                 print(line)
 
         print("Time to run AutoRoute: %s" % (datetime.datetime.utcnow()-time_start))

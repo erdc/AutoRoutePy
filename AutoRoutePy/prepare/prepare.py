@@ -9,9 +9,11 @@
 
 import csv
 import datetime
+from io import open
+import os
+
 from netCDF4 import Dataset
 import numpy as np
-import os
 from osgeo import gdal, ogr, osr
 from RAPIDpy.dataset import RAPIDDataset
 from RAPIDpy.helper_functions import csv_to_list
@@ -170,7 +172,7 @@ class AutoRoutePrepare(object):
             raise Exception(err)
         else:
             print('AutoRoute output:')
-            for line in out.split('\n'):
+            for line in out.split(b'\n'):
                 print(line)
 
         print("Time to run: %s" % (datetime.datetime.utcnow()-time_start))
@@ -201,7 +203,7 @@ class AutoRoutePrepare(object):
             raise Exception(err)
         else:
             print('AutoRoute output:')
-            for line in out.split('\n'):
+            for line in out.split(b'\n'):
                 print(line)
 
         print("Time to run: %s" % (datetime.datetime.utcnow()-time_start))
@@ -221,7 +223,7 @@ class AutoRoutePrepare(object):
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
-        with open(temp_stream_info_file, 'wb') as outfile:
+        with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope"])
             for feature in stream_shp_layer:
@@ -316,7 +318,7 @@ class AutoRoutePrepare(object):
      
         print("Analyzing data and writing output ...")
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
-        with open(temp_stream_info_file, 'wb') as outfile:
+        with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
 
@@ -401,8 +403,8 @@ class AutoRoutePrepare(object):
         
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         print("Analyzing data and appending to list ...")
-        with open(temp_stream_info_file, 'wb') as outfile:
-            writer = csv.writer(outfile, delimiter=" ")
+        with open(temp_stream_info_file, 'w', newline='') as outfile:
+            writer = csv.writer(outfile)
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             
             with RAPIDDataset(rapid_output_file) as data_nc:
@@ -423,7 +425,7 @@ class AutoRoutePrepare(object):
                                      " No stream ID's found ...".format(self.stream_info_file))
                 
                 step_size = min(max_chunk_size/time_length, streamid_list_length)
-                for list_index_start in xrange(0, streamid_list_length, step_size):
+                for list_index_start in range(0, streamid_list_length, step_size):
                     list_index_end = min(list_index_start+step_size, streamid_list_length)
                     print("River ID subset range {0} to {1} of {2} ...".format(list_index_start,
                                                                                list_index_end,
@@ -487,7 +489,7 @@ class AutoRoutePrepare(object):
         print("Analyzing data and appending to list ...")
         
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
-        with open(temp_stream_info_file, 'wb') as outfile:
+        with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             for streamid in streamid_list_unique:
@@ -523,7 +525,7 @@ class AutoRoutePrepare(object):
         stream_id_list = np.array([row[3] for row in stream_info_table], dtype=np.int32)
         
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
-        with open(temp_stream_info_file, 'wb') as outfile:
+        with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
             writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
             for feature in stream_shp_layer:
