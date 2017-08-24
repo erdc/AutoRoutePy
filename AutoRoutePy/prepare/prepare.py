@@ -225,7 +225,7 @@ class AutoRoutePrepare(object):
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
-            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope"])
+            writer.writerow([u"DEM_1D_Index", u"Row", u"Col", u"StreamID", u"StreamDirection", u"Slope"])
             for feature in stream_shp_layer:
                 #find all raster indices associates with the comid
                 raster_index_list = np.where(stream_id_list==int(float(feature.GetField(stream_id_field))))[0]
@@ -320,7 +320,7 @@ class AutoRoutePrepare(object):
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
-            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            writer.writerow([u"DEM_1D_Index", u"Row", u"Col", u"StreamID", u"StreamDirection", u"Slope", "uFlow"])
 
             for streamid_index, streamid in enumerate(streamid_list_unique):
                 #perform analysis on datasets
@@ -405,7 +405,7 @@ class AutoRoutePrepare(object):
         print("Analyzing data and appending to list ...")
         with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile)
-            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            writer.writerow([u"DEM_1D_Index", u"Row", u"Col", u"StreamID", u"StreamDirection", u"Slope", u"Flow"])
             
             with RAPIDDataset(rapid_output_file) as data_nc:
                 
@@ -491,7 +491,7 @@ class AutoRoutePrepare(object):
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
-            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            writer.writerow([u"DEM_1D_Index", u"Row", u"Col", u"StreamID", u"StreamDirection", u"Slope", u"Flow"])
             for streamid in streamid_list_unique:
                 try:
                     #get where streamids are in netcdf file
@@ -527,7 +527,7 @@ class AutoRoutePrepare(object):
         temp_stream_info_file = "{0}_temp.txt".format(os.path.splitext(self.stream_info_file)[0])
         with open(temp_stream_info_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile, delimiter=" ")
-            writer.writerow(["DEM_1D_Index", "Row", "Col", "StreamID", "StreamDirection", "Slope", "Flow"])
+            writer.writerow([u"DEM_1D_Index", u"Row", u"Col", u"StreamID", u"StreamDirection", u"Slope", u"Flow"])
             for feature in stream_shp_layer:
                 #find all raster indices associates with the comid
                 raster_index_list = np.where(stream_id_list==int(float(feature.GetField(stream_id_field))))[0]
