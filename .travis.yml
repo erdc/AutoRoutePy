@@ -39,7 +39,7 @@ before_install:
 #-----------------------------------------------------------------------------
 # Install required python packages
 #-----------------------------------------------------------------------------
-- conda install --yes -c conda-forge nose rapidpy
+- conda install --yes -c conda-forge nose rapidpy bcrypt pynacl pycrypto
 
 #*******************************************************************************
 #Installing AutoRoutePy
