@@ -18,35 +18,35 @@ class AutoRoute(object):
     This class is designed to prepare the AUTO_ROUTE_INPUT.txt file and run 
     the AutoRoute program. Additionally, it can perform some GDAL functions
     """
-    #REQUIRED ARGS
-    dem_raster_file_path=""
-    stream_info_file_path=""
-    
-    #OPTIONAL ARGS
-    #set default parameters
-    
-    manning_n_raster_file_path=""
-    x_section_dist = None
-    default_manning_n = None
-    low_spot_range = None #num cells in center to look to find the lowest point in a cross-section
-    use_prev_d_4_xsect = None #use previous depths to calculate XS if value is slightly over
-    degree_manipulation = None #This is how many degrees (both positive and negative) that are manipulated to catch all of the boundaries
-    degree_interval = None #This is the interval between the degrees of maniputaiton
-    cells_past_water_depth = None #cells past the waterdepth for each X-Sections
-    q_limit = None #The Q Limit Factor limits erroneous results by stopping too much overflow
-    eliminate_xsection = None #ELIMINATE the Cross-Sections that don't fully Connect
-    xsect_file_path = ""
-    out_flood_map_raster_path = ""
-    out_flood_depth_raster_path = ""
-    out_flood_map_shapefile_path = ""
-
     def __init__(self, autoroute_executable_location, **kwargs):
         """
         Initialize the class with variables given by the user
         """
         self._autoroute_executable_location = autoroute_executable_location
+
+        # REQUIRED ARGS
+        self.dem_raster_file_path = ""
+        self.stream_info_file_path = ""
+
+        # OPTIONAL ARGS
+        # set default parameters
+        self.manning_n_raster_file_path = ""
+        self.x_section_dist = None
+        self.default_manning_n = None
+        self.low_spot_range = None  # num cells in center to look to find the lowest point in a cross-section
+        self.use_prev_d_4_xsect = None  # use previous depths to calculate XS if value is slightly over
+        self.degree_manipulation = None  # This is how many degrees (both positive and negative) that are manipulated to catch all of the boundaries
+        self.degree_interval = None  # This is the interval between the degrees of maniputaiton
+        self.cells_past_water_depth = None  # cells past the waterdepth for each X-Sections
+        self.q_limit = None  # The Q Limit Factor limits erroneous results by stopping too much overflow
+        self.eliminate_xsection = None  # ELIMINATE the Cross-Sections that don't fully Connect
+        self.xsect_file_path = ""
+        self.out_flood_map_raster_path = ""
+        self.out_flood_depth_raster_path = ""
+        self.out_flood_map_shapefile_path = ""
+
         self.update_parameters(**kwargs)
-        
+
 
     def update_parameters(self, **kwargs):
         """
@@ -70,7 +70,7 @@ class AutoRoute(object):
             pass
         
         new_file = open(file_path,'w')
-        for attr, value in self.__dict__.items():
+        for attr, value in sorted(list(self.__dict__.items())):
             if not attr.startswith('_') and value:
                 new_file.write("%s %s\n" % (attr, value))
     

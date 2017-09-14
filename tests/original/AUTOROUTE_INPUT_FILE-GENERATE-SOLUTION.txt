@@ -1,9 +1,9 @@
-x_section_dist 5000.0
+default_manning_n 0.035
+degree_interval 1.5
 degree_manipulation 3.1
+dem_raster_file_path elevation.tif
 low_spot_range 15
+out_flood_map_shapefile_path right_here.shp
 q_limit 1.01
 stream_info_file_path stream_info.txt
-default_manning_n 0.035
-out_flood_map_shapefile_path right_here.shp
-dem_raster_file_path elevation.tif
-degree_interval 1.5
+x_section_dist 5000.0
