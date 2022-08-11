@@ -1,9 +1,9 @@
 # AutoRoutePy
 Python scripting interface for the AutoRoute progam. Has ability to Prepare input from RAPID output (www.rapid-hub.org).
 
-[![DOI](https://zenodo.org/badge/19918/erdc/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/AutoRoutePy)
+[![DOI](https://zenodo.org/badge/19918/erdc/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc/AutoRoutePy)
 
-[![Build Status](https://travis-ci.org/erdc/AutoRoutePy.svg?branch=master)](https://travis-ci.org/erdc-cm/AutoRoutePy)
+[![Build Status](https://travis-ci.org/erdc/AutoRoutePy.svg?branch=master)](https://travis-ci.org/erdc/AutoRoutePy)
 
 [![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc/AutoRoutePy/blob/master/LICENSE)
 
