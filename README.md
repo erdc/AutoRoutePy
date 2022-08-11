@@ -1,21 +1,21 @@
 # AutoRoutePy
 Python scripting interface for the AutoRoute progam. Has ability to Prepare input from RAPID output (www.rapid-hub.org).
 
-[![DOI](https://zenodo.org/badge/19918/erdc-cm/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/AutoRoutePy)
+[![DOI](https://zenodo.org/badge/19918/erdc/AutoRoutePy.svg)](https://zenodo.org/badge/latestdoi/19918/erdc-cm/AutoRoutePy)
 
-[![Build Status](https://travis-ci.org/erdc-cm/AutoRoutePy.svg?branch=master)](https://travis-ci.org/erdc-cm/AutoRoutePy)
+[![Build Status](https://travis-ci.org/erdc/AutoRoutePy.svg?branch=master)](https://travis-ci.org/erdc-cm/AutoRoutePy)
 
-[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc-cm/AutoRoutePy/blob/master/LICENSE)
+[![License (3-Clause BSD)](https://img.shields.io/badge/license-BSD%203--Clause-yellow.svg)](https://github.com/erdc/AutoRoutePy/blob/master/LICENSE)
 
 ##Prereqs
-- AutoRoute (GDAL Branch). See: https://github.com/erdc-cm/AutoRoute/tree/cgdal
-- RAPIDpy. See: https://github.com/erdc-cm/RAPIDpy
-- (Optional) HTCondor & condorpy. See: https://github.com/erdc-cm/spt_ecmwf_autorapid_process
+- AutoRoute (GDAL Branch). See: https://github.com/erdc/AutoRoute/tree/cgdal
+- RAPIDpy. See: https://github.com/erdc/RAPIDpy
+- (Optional) HTCondor & condorpy. See: https://github.com/erdc/spt_ecmwf_autorapid_process
 
 ##Installation
 
 ```
-$ git clone https://github.com/erdc-cm/AutoRoutePy.git
+$ git clone https://github.com/erdc/AutoRoutePy.git
 $ cd AutoRoutePy
 ```
 To install:
@@ -167,7 +167,7 @@ arp.append_streamflow_from_rapid_output(rapid_output_file)
 
 ```
 ####Create AutoRoute input from return period file
-If you created a return period file from https://github.com/erdc-cm/spt_lsm_autorapid_process,
+If you created a return period file from https://github.com/erdc/spt_lsm_autorapid_process,
 you can add the peak flows from each return period to the stream_info.txt.
 
 NOTE: Valid return period options: return_period_20, return_period_10, return_period_2, max_flow
